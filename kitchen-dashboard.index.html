@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleggfoods — หน้าจอครัว</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f1117; --surface:#181b24; --border:#252a38;
+    --accent:#f5a623; --accent2:#e05c2a;
+    --green:#2ecc71; --red:#e74c3c; --blue:#3498db;
+    --text:#e8eaf0; --muted:#5a6275;
+    --font-mono:'IBM Plex Mono',monospace;
+    --font-thai:'IBM Plex Sans Thai',sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font-thai); min-height:100vh; }
+
+  .header { background:var(--surface); border-bottom:1px solid var(--border); padding:14px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .logo { font-family:var(--font-mono); font-size:1.1rem; font-weight:700; color:var(--accent); letter-spacing:3px; }
+  .logo span { color:var(--accent2); }
+  .clock { font-family:var(--font-mono); font-size:1.4rem; font-weight:600; letter-spacing:2px; }
+  .live-badge { display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--green); text-transform:uppercase; letter-spacing:1px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .stats-bar { display:flex; gap:1px; background:var(--border); border-bottom:1px solid var(--border); }
+  .stat { flex:1; background:var(--surface); padding:14px 20px; }
+  .stat-num { font-family:var(--font-mono); font-size:1.8rem; font-weight:700; }
+  .stat-label { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+  .c-orange{color:var(--accent)} .c-blue{color:var(--blue)} .c-green{color:var(--green)} .c-red{color:var(--red)}
+
+  .board { display:grid; grid-template-columns:repeat(3,1fr); height:calc(100vh - 122px); overflow:hidden; }
+  .col { border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+  .col:last-child { border-right:none; }
+  .col-header { padding:14px 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid var(--border); background:var(--surface); }
+  .col-title { font-family:var(--font-mono); font-size:0.8rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
+  .t-new{color:var(--accent)} .t-cooking{color:var(--blue)} .t-done{color:var(--green)}
+  .col-count { font-family:var(--font-mono); font-size:0.75rem; background:var(--border); color:var(--muted); padding:3px 10px; border-radius:99px; }
+  .col-body { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+  .col-body::-webkit-scrollbar{width:4px} .col-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  .order-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; transition:border-color 0.2s,transform 0.15s; animation:slideIn 0.3s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+  .order-card:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .order-card.urgent { border-color:var(--red); }
+
+  .order-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .order-num { font-family:var(--font-mono); font-size:1.1rem; font-weight:700; color:var(--accent); }
+  .order-table { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+  .order-timer { font-family:var(--font-mono); font-size:0.85rem; color:var(--muted); text-align:right; }
+  .order-timer.late { color:var(--red); font-weight:700; }
+  .urgent-tag { background:var(--red); color:#fff; font-size:0.65rem; padding:2px 8px; border-radius:99px; font-weight:700; margin-top:4px; display:inline-block; }
+
+  .order-items { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .order-item { display:flex; align-items:flex-start; gap:8px; background:var(--bg); border-radius:6px; padding:8px 10px; }
+  .item-emoji { font-size:1.1rem; flex-shrink:0; }
+  .item-info { flex:1; }
+  .item-name { font-size:0.85rem; font-weight:600; }
+  .item-note { font-size:0.72rem; color:var(--accent2); margin-top:2px; }
+  .item-qty { font-family:var(--font-mono); font-size:0.8rem; background:var(--border); color:var(--accent); padding:2px 8px; border-radius:99px; font-weight:700; flex-shrink:0; }
+
+  .order-actions { display:flex; gap:8px; }
+  .btn { flex:1; padding:8px; border:none; border-radius:7px; font-family:var(--font-thai); font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+  .btn-start { background:rgba(52,152,219,0.15); color:var(--blue); border:1px solid rgba(52,152,219,0.3); }
+  .btn-start:hover { background:var(--blue); color:#fff; }
+  .btn-done { background:rgba(46,204,113,0.15); color:var(--green); border:1px solid rgba(46,204,113,0.3); }
+  .btn-done:hover { background:var(--green); color:#fff; }
+  .btn-cancel { background:rgba(231,76,60,0.1); color:var(--red); border:1px solid rgba(231,76,60,0.2); }
+  .btn-cancel:hover { background:var(--red); color:#fff; }
+  .btn-clear { background:rgba(90,98,117,0.2); color:var(--muted); border:1px solid var(--border); }
+  .btn-clear:hover { background:var(--border); color:var(--text); }
+  .order-total { font-family:var(--font-mono); font-size:0.82rem; color:var(--muted); text-align:right; margin-top:8px; }
+  .order-total span { color:var(--accent); font-weight:700; }
+
+  .empty-col { text-align:center; padding:40px 20px; color:var(--muted); font-size:0.85rem; line-height:2; }
+  .empty-icon { font-size:2.5rem; margin-bottom:10px; opacity:0.4; }
+
+  .clear-btn { position:fixed; bottom:24px; right:24px; background:#1e0d00; color:var(--muted); border:1px solid var(--border); border-radius:99px; padding:10px 20px; font-family:var(--font-thai); font-size:0.8rem; cursor:pointer; z-index:200; }
+  .clear-btn:hover { background:var(--red); color:#fff; border-color:var(--red); }
+
+  /* Toast notification */
+  .toast { position:fixed; top:80px; left:50%; transform:translateX(-50%) translateY(-20px); background:var(--green); color:#000; padding:12px 24px; border-radius:99px; font-weight:700; font-size:0.9rem; opacity:0; transition:all 0.4s; z-index:999; pointer-events:none; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="logo">Fleggfoods <span style="font-size:0.65rem;color:var(--muted);letter-spacing:1px">// KITCHEN</span></div>
+    <div class="live-badge"><div class="dot"></div>LIVE</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button onclick="enableAudio()" id="audioBtn" style="background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.3);color:var(--accent);padding:6px 14px;border-radius:8px;font-size:0.78rem;cursor:pointer;font-family:var(--font-thai)">🔇 เปิดเสียง</button>
+    <div class="clock" id="clock">00:00:00</div>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num c-orange" id="stat-new">0</div><div class="stat-label">รอดำเนินการ</div></div>
+  <div class="stat"><div class="stat-num c-blue" id="stat-cooking">0</div><div class="stat-label">กำลังทำ</div></div>
+  <div class="stat"><div class="stat-num c-green" id="stat-done">0</div><div class="stat-label">เสร็จแล้ว</div></div>
+  <div class="stat"><div class="stat-num c-red" id="stat-urgent">0</div><div class="stat-label">รอนาน &gt;10 นาที</div></div>
+</div>
+
+<div class="board">
+  <div class="col">
+    <div class="col-header"><div class="col-title t-new">⏳ รอดำเนินการ</div><div class="col-count" id="count-new">0</div></div>
+    <div class="col-body" id="col-new"></div>
+  </div>
+  <div class="col">
+    <div class="col-header"><div class="col-title t-cooking">🔥 กำลังทำ</div><div class="col-count" id="count-cooking">0</div></div>
+    <div class="col-body" id="col-cooking"></div>
+  </div>
+  <div class="col">
+    <div class="col-header"><div class="col-title t-done">✅ เสร็จแล้ว / แจ้งลูกค้าแล้ว</div><div class="col-count" id="count-done">0</div></div>
+    <div class="col-body" id="col-done"></div>
+  </div>
+</div>
+
+<button class="clear-btn" onclick="clearDone()">🗑 ล้างรายการเสร็จแล้ว</button>
+<div class="toast" id="toast"></div>
+
+<script>
+function getOrders() {
+  try { return JSON.parse(localStorage.getItem('smashco_orders')||'[]'); } catch(e) { return []; }
+}
+function saveOrders(orders) { localStorage.setItem('smashco_orders', JSON.stringify(orders)); }
+
+// ---- SOUND ----
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playDefaultNewOrder() {
+  try {
+    const ctx = getAudioCtx();
+    const beeps = [[880,0,0.12],[660,0.15,0.12],[880,0.3,0.18]];
+    beeps.forEach(([freq,start,dur])=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value=freq; osc.type='sine';
+      gain.gain.setValueAtTime(0,ctx.currentTime+start);
+      gain.gain.linearRampToValueAtTime(0.5,ctx.currentTime+start+0.01);
+      gain.gain.linearRampToValueAtTime(0,ctx.currentTime+start+dur);
+      osc.start(ctx.currentTime+start); osc.stop(ctx.currentTime+start+dur+0.05);
+    });
+  } catch(e){}
+}
+
+function playSound(key, fallbackFn) {
+  const data = localStorage.getItem(key);
+  if (data) {
+    try {
+      const audio = new Audio(data);
+      audio.volume = 0.8;
+      audio.play().catch(()=>fallbackFn&&fallbackFn());
+    } catch(e){ fallbackFn&&fallbackFn(); }
+  } else {
+    fallbackFn&&fallbackFn();
+  }
+}
+
+function playNewOrderSound() { playSound('flegg_sound_neworder', playDefaultNewOrder); }
+
+// Track order count to detect new arrivals
+let knownOrderIds = new Set();
+
+function getElapsed(createdAt) {
+  const diff = Date.now()-createdAt;
+  const mins = Math.floor(diff/60000);
+  const secs = Math.floor((diff%60000)/1000);
+  return { mins, secs, label:`${mins}:${String(secs).padStart(2,'0')}` };
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+function moveOrder(id, newStatus) {
+  const orders = getOrders();
+  const idx = orders.findIndex(o=>o.id===id);
+  if (idx===-1) return;
+  if (newStatus==='remove') {
+    orders.splice(idx,1);
+  } else {
+    orders[idx].status = newStatus;
+    if (newStatus==='done') {
+      showToast(`✅ แจ้งลูกค้า #${String(id).padStart(3,'0')} แล้ว — อาหารพร้อมเสิร์ฟ!`);
+    }
+  }
+  saveOrders(orders);
+  renderAll();
+}
+
+function clearDone() {
+  const orders = getOrders().filter(o=>o.status!=='done');
+  saveOrders(orders);
+  renderAll();
+}
+
+function renderCol(colId, orders, status) {
+  const col = document.getElementById(colId);
+  if (!orders.length) {
+    const icons={new:'🍔',cooking:'👨‍🍳',done:'🎉'};
+    const msgs={new:'No new orders yet<br><small>Waiting for customers...</small>',cooking:'No orders<br>in progress',done:'No completed<br>orders yet'};
+    col.innerHTML=`<div class="empty-col"><div class="empty-icon">${icons[status]}</div>${msgs[status]}</div>`;
+    return;
+  }
+  col.innerHTML = orders.map(o=>{
+    const el=getElapsed(o.createdAt);
+    const isUrgent=el.mins>=10&&status!=='done';
+    const total=o.items.reduce((s,i)=>s+i.price*i.qty,0);
+    const itemsHtml=o.items.map(i=>`
+      <div class="order-item">
+        <div class="item-emoji">${i.emoji}</div>
+        <div class="item-info">
+          <div class="item-name">${i.name}</div>
+          ${o.note?`<div class="item-note">📝 ${o.note}</div>`:''}
+        </div>
+        <div class="item-qty">x${i.qty}</div>
+      </div>
+    `).join('');
+
+    let actions='';
+    if (status==='new') {
+      actions=`<button class="btn btn-start" onclick="moveOrder(${o.id},'cooking')">🔥 เริ่มทำ</button><button class="btn btn-cancel" onclick="moveOrder(${o.id},'remove')">✕ ยกเลิก</button>`;
+    } else if (status==='cooking') {
+      actions=`<button class="btn btn-done" onclick="moveOrder(${o.id},'done')">✅ เสร็จ — แจ้งลูกค้า</button><button class="btn btn-cancel" onclick="moveOrder(${o.id},'remove')">✕</button>`;
+    } else {
+      actions=`<button class="btn btn-clear" onclick="moveOrder(${o.id},'remove')" style="flex:1">🗑 ลบออก</button>`;
+    }
+
+    return `
+      <div class="order-card${isUrgent?' urgent':''}">
+        <div class="order-top">
+          <div>
+            <div class="order-num">#${String(o.id).padStart(3,'0')}</div>
+            <div class="order-table">🪑 ${o.table}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="order-timer${isUrgent?' late':''}">${el.label}</div>
+            ${isUrgent?'<div class="urgent-tag">⚠ รอนาน!</div>':''}
+          </div>
+        </div>
+        <div class="order-items">${itemsHtml}</div>
+        <div class="order-actions">${actions}</div>
+        <div class="order-total">รวม <span>฿${total.toLocaleString()}</span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAll() {
+  const orders = getOrders();
+  const cols={new:[],cooking:[],done:[]};
+  orders.forEach(o=>{ if(cols[o.status]) cols[o.status].push(o); });
+  const urgent=orders.filter(o=>o.status!=='done'&&getElapsed(o.createdAt).mins>=10).length;
+  document.getElementById('stat-new').textContent=cols.new.length;
+  document.getElementById('stat-cooking').textContent=cols.cooking.length;
+  document.getElementById('stat-done').textContent=cols.done.length;
+  document.getElementById('stat-urgent').textContent=urgent;
+  document.getElementById('count-new').textContent=cols.new.length;
+  document.getElementById('count-cooking').textContent=cols.cooking.length;
+  document.getElementById('count-done').textContent=cols.done.length;
+  renderCol('col-new',cols.new,'new');
+  renderCol('col-cooking',cols.cooking,'cooking');
+  renderCol('col-done',cols.done,'done');
+
+  // Detect new orders and play sound
+  const currentIds = new Set(orders.map(o=>o.id));
+  if (knownOrderIds.size > 0) { // skip first load
+    orders.forEach(o=>{
+      if (!knownOrderIds.has(o.id)) playNewOrderSound();
+    });
+  }
+  knownOrderIds = currentIds;
+}
+
+function updateClock() {
+  const n=new Date();
+  document.getElementById('clock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+}
+
+function enableAudio() {
+  try {
+    getAudioCtx().resume();
+    playNewOrderSound();
+    const btn = document.getElementById('audioBtn');
+    btn.textContent = '🔔 เสียงเปิดแล้ว';
+    btn.style.background = 'rgba(46,204,113,0.15)';
+    btn.style.borderColor = 'rgba(46,204,113,0.3)';
+    btn.style.color = 'var(--green)';
+    btn.onclick = null;
+    btn.style.cursor = 'default';
+  } catch(e){}
+}
+setInterval(updateClock,1000); updateClock();
+setInterval(renderAll,2000);
+window.addEventListener('storage',e=>{ if(e.key==='smashco_orders') renderAll(); });
+renderAll();
+</script>
+</body>
+</html>
