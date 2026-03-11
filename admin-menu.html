@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMASH&CO — จัดการเมนู</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f1117; --surface:#181b24; --border:#252a38;
+    --accent:#f5a623; --accent2:#e05c2a;
+    --green:#2ecc71; --red:#e74c3c; --blue:#3498db;
+    --text:#e8eaf0; --muted:#5a6275;
+    --mono:'IBM Plex Mono',monospace;
+    --thai:'IBM Plex Sans Thai',sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--thai); min-height:100vh; }
+
+  /* HEADER */
+  .header { background:var(--surface); border-bottom:2px solid var(--accent); padding:16px 28px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+  .logo { font-family:var(--mono); font-size:1.1rem; font-weight:700; color:var(--accent); letter-spacing:3px; }
+  .admin-badge { background:var(--accent2); color:#fff; font-size:0.72rem; padding:4px 12px; border-radius:99px; letter-spacing:1px; font-weight:700; }
+
+  /* LAYOUT */
+  .layout { display:grid; grid-template-columns:1fr 380px; gap:0; min-height:calc(100vh - 65px); }
+
+  /* LEFT: menu list */
+  .left { padding:24px; overflow-y:auto; border-right:1px solid var(--border); }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .section-title { font-family:var(--mono); font-size:0.85rem; font-weight:700; color:var(--accent); letter-spacing:2px; text-transform:uppercase; }
+  .add-btn { background:rgba(245,166,35,0.15); color:var(--accent); border:1px solid rgba(245,166,35,0.3); padding:7px 16px; border-radius:8px; font-family:var(--thai); font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+  .add-btn:hover { background:var(--accent); color:#000; }
+
+  /* Category tabs */
+  .cat-tabs { display:flex; gap:8px; margin-bottom:20px; }
+  .cat-tab { padding:8px 18px; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; border:1px solid var(--border); color:var(--muted); transition:all 0.2s; }
+  .cat-tab.active { background:rgba(245,166,35,0.15); border-color:var(--accent); color:var(--accent); }
+
+  /* Menu item row */
+  .menu-row { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:14px; margin-bottom:10px; transition:border-color 0.2s; }
+  .menu-row:hover { border-color: #3a3f52; }
+  .row-emoji { font-size:2rem; flex-shrink:0; }
+  .row-info { flex:1; }
+  .row-name { font-size:0.95rem; font-weight:600; color:var(--text); }
+  .row-desc { font-size:0.75rem; color:var(--muted); margin-top:3px; }
+  .row-price { font-family:var(--mono); font-size:1rem; color:var(--accent); font-weight:700; margin-right:8px; flex-shrink:0; }
+  .row-tag { font-size:0.65rem; background:rgba(245,166,35,0.15); color:var(--accent); padding:2px 8px; border-radius:99px; margin-top:4px; display:inline-block; }
+  .row-actions { display:flex; gap:6px; flex-shrink:0; }
+  .btn-edit { background:rgba(52,152,219,0.15); color:var(--blue); border:1px solid rgba(52,152,219,0.3); padding:6px 14px; border-radius:7px; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+  .btn-edit:hover { background:var(--blue); color:#fff; }
+  .btn-del { background:rgba(231,76,60,0.1); color:var(--red); border:1px solid rgba(231,76,60,0.2); padding:6px 10px; border-radius:7px; font-size:0.78rem; cursor:pointer; transition:all 0.2s; }
+  .btn-del:hover { background:var(--red); color:#fff; }
+  .unavail-badge { font-size:0.65rem; background:rgba(231,76,60,0.15); color:var(--red); padding:2px 8px; border-radius:99px; margin-top:4px; display:inline-block; }
+
+  /* availability toggle */
+  .toggle { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .slider { position:absolute; cursor:pointer; inset:0; background:#3a1a00; border-radius:99px; transition:0.3s; }
+  .slider:before { content:''; position:absolute; width:16px; height:16px; left:3px; top:3px; background:#fff; border-radius:50%; transition:0.3s; }
+  input:checked + .slider { background:var(--green); }
+  input:checked + .slider:before { transform:translateX(18px); }
+
+  /* RIGHT: form panel */
+  .right { padding:28px; background:var(--surface); }
+  .form-title { font-family:var(--mono); font-size:0.9rem; font-weight:700; color:var(--accent); letter-spacing:2px; margin-bottom:24px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .field input, .field select, .field textarea {
+    width:100%; background:var(--bg); border:1px solid var(--border);
+    color:var(--text); border-radius:8px; padding:10px 14px;
+    font-family:var(--thai); font-size:0.9rem; transition:border-color 0.2s;
+    resize:none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--accent); }
+  .field select option { background:var(--surface); }
+  .emoji-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .emoji-opt { width:40px; height:40px; border-radius:8px; border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:1.3rem; cursor:pointer; transition:all 0.2s; }
+  .emoji-opt.selected { border-color:var(--accent); background:rgba(245,166,35,0.15); }
+  .form-actions { display:flex; gap:10px; margin-top:24px; }
+  .btn-save { flex:2; padding:12px; background:var(--accent); border:none; border-radius:8px; color:#000; font-family:var(--thai); font-weight:700; font-size:0.95rem; cursor:pointer; transition:background 0.2s; }
+  .btn-save:hover { background:#f0b940; }
+  .btn-reset { flex:1; padding:12px; background:var(--border); border:none; border-radius:8px; color:var(--muted); font-family:var(--thai); font-size:0.9rem; cursor:pointer; }
+  .btn-reset:hover { color:var(--text); }
+
+  /* Stats */
+  .stats-row { display:flex; gap:10px; margin-bottom:24px; }
+  .mini-stat { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .mini-stat-num { font-family:var(--mono); font-size:1.4rem; font-weight:700; }
+  .mini-stat-label { font-size:0.7rem; color:var(--muted); margin-top:3px; text-transform:uppercase; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--green); color:#000; padding:12px 28px; border-radius:99px; font-weight:700; font-size:0.9rem; opacity:0; transition:all 0.35s; z-index:999; pointer-events:none; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* Confirm dialog */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:300; backdrop-filter:blur(4px); }
+  .overlay.open { display:flex; }
+  .dialog { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; width:320px; text-align:center; }
+  .dialog-title { font-family:var(--mono); font-size:1rem; color:var(--text); margin-bottom:10px; }
+  .dialog-sub { font-size:0.85rem; color:var(--muted); margin-bottom:24px; line-height:1.6; }
+  .dialog-actions { display:flex; gap:10px; }
+  .btn-confirm-del { flex:1; padding:10px; background:var(--red); border:none; border-radius:8px; color:#fff; font-weight:700; cursor:pointer; }
+  .btn-cancel-del { flex:1; padding:10px; background:var(--border); border:none; border-radius:8px; color:var(--muted); cursor:pointer; }
+
+  .empty-list { text-align:center; padding:40px; color:var(--muted); font-size:0.85rem; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">SMASH<span style="color:var(--accent2)">&</span>CO</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span style="font-size:0.8rem;color:var(--muted)">เชื่อมต่อกับ burger-order.html อัตโนมัติ</span>
+    <div class="admin-badge">⚙ ADMIN</div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- LEFT: menu list -->
+  <div class="left">
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="cat-tabs" id="catTabs">
+      <div class="cat-tab active" onclick="switchCat('burger',this)">🍔 เบอร์เกอร์</div>
+      <div class="cat-tab" onclick="switchCat('sides',this)">🍟 เครื่องเคียง</div>
+      <div class="cat-tab" onclick="switchCat('drinks',this)">🥤 เครื่องดื่ม</div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title" id="listTitle">เบอร์เกอร์</div>
+      <button class="add-btn" onclick="openAddForm()">＋ เพิ่มเมนูใหม่</button>
+    </div>
+
+    <div id="menuList"></div>
+  </div>
+
+  <!-- RIGHT: form -->
+  <div class="right">
+    <div class="form-title" id="formTitle">// เพิ่มเมนูใหม่</div>
+    <div class="field">
+      <label>ชื่อเมนู</label>
+      <input id="fName" type="text" placeholder="เช่น Classic Smash">
+    </div>
+    <div class="field">
+      <label>รายละเอียด</label>
+      <textarea id="fDesc" rows="2" placeholder="เช่น เนื้อบดสด ชีสอเมริกัน..."></textarea>
+    </div>
+    <div class="field">
+      <label>ราคา (บาท)</label>
+      <input id="fPrice" type="number" placeholder="เช่น 179" min="0">
+    </div>
+    <div class="field">
+      <label>หมวดหมู่</label>
+      <select id="fCat">
+        <option value="burger">🍔 เบอร์เกอร์</option>
+        <option value="sides">🍟 เครื่องเคียง</option>
+        <option value="drinks">🥤 เครื่องดื่ม</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>ป้ายกำกับ (Tag) — ไม่บังคับ</label>
+      <input id="fTag" type="text" placeholder="เช่น ยอดนิยม, พรีเมียม, เผ็ด...">
+    </div>
+    <div class="field">
+      <label>อีโมจิ</label>
+      <div class="emoji-row" id="emojiRow"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-reset" onclick="resetForm()">ล้างฟอร์ม</button>
+      <button class="btn-save" onclick="saveItem()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete dialog -->
+<div class="overlay" id="delOverlay">
+  <div class="dialog">
+    <div class="dialog-title">ลบเมนูนี้?</div>
+    <div class="dialog-sub" id="delName">—</div>
+    <div class="dialog-actions">
+      <button class="btn-cancel-del" onclick="closeDelDialog()">ยกเลิก</button>
+      <button class="btn-confirm-del" onclick="confirmDelete()">🗑 ลบเลย</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const EMOJIS = ['🍔','🥓','🍗','🍄','🏆','🌶️','🍟','🧅','🥗','🥤','🥛','🍊','🧀','🥚','🍞','🫙','🌮','🍕','🧄','🥬','🫚','🍋','🧃','☕'];
+
+const DEFAULT_MENU = {
+  burger: [
+    { id:1, name:"Classic Smash", desc:"เนื้อบดสด ชีสอเมริกัน มัสตาร์ด หัวหอม", price:179, emoji:"🍔", tag:"ยอดนิยม", available:true },
+    { id:2, name:"BBQ Bacon King", desc:"เบคอน ซอส BBQ สโมกกี้ ชีสเชดด้า", price:219, emoji:"🥓", tag:"ซิกเนเจอร์", available:true },
+    { id:3, name:"Crispy Chicken", desc:"ไก่กรอบ ซอสเผ็ด กะหล่ำปลีดอง", price:189, emoji:"🍗", tag:"", available:true },
+    { id:4, name:"Truffle Mushroom", desc:"เห็ดผัดเนย ซอสทรัฟเฟิล ชีสสวิส", price:249, emoji:"🍄", tag:"พรีเมียม", available:true },
+    { id:5, name:"Double Double", desc:"เนื้อสองชั้น ชีสสองชั้น ผักสด", price:259, emoji:"🏆", tag:"เบสต์เซลเลอร์", available:true },
+    { id:6, name:"Spicy Jalapeño", desc:"ฮาลาปิโน สดๆ ซอสชิโพเทล มาโย", price:199, emoji:"🌶️", tag:"เผ็ด", available:true },
+  ],
+  sides: [
+    { id:10, name:"เฟรนช์ฟรายส์", desc:"มันฝรั่งทอดกรอบ โรยเกลือทะเล", price:59, emoji:"🍟", tag:"", available:true },
+    { id:11, name:"ออนิออนริงส์", desc:"หัวหอมชุบแป้งทอด กรอบนอกนุ่มใน", price:69, emoji:"🧅", tag:"", available:true },
+    { id:12, name:"โคล สลอว์", desc:"กะหล่ำปลีสดคลุกซอสครีมมี่", price:49, emoji:"🥗", tag:"", available:true },
+  ],
+  drinks: [
+    { id:20, name:"โคล่า", desc:"เย็นสดชื่น", price:39, emoji:"🥤", tag:"", available:true },
+    { id:21, name:"มิลค์เชค", desc:"วานิลลา / ช็อกโกแลต / สตรอว์เบอร์รี", price:79, emoji:"🥛", tag:"", available:true },
+    { id:22, name:"น้ำส้ม", desc:"คั้นสดทุกวัน", price:49, emoji:"🍊", tag:"", available:true },
+  ]
+};
+
+let currentCat = 'burger';
+let editingId = null;
+let selectedEmoji = '🍔';
+let deleteTargetId = null;
+
+function getMenu() {
+  try {
+    const saved = localStorage.getItem('smashco_menu');
+    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_MENU));
+  } catch(e) { return JSON.parse(JSON.stringify(DEFAULT_MENU)); }
+}
+
+function saveMenu(menu) {
+  localStorage.setItem('smashco_menu', JSON.stringify(menu));
+}
+
+function showToast(msg, color = 'var(--green)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color;
+  t.style.color = color === 'var(--red)' ? '#fff' : '#000';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function switchCat(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const titles = { burger:'เบอร์เกอร์', sides:'เครื่องเคียง', drinks:'เครื่องดื่ม' };
+  document.getElementById('listTitle').textContent = titles[cat];
+  document.getElementById('fCat').value = cat;
+  renderList();
+}
+
+function renderStats() {
+  const menu = getMenu();
+  const all = [...menu.burger, ...menu.sides, ...menu.drinks];
+  const avail = all.filter(i => i.available !== false).length;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="mini-stat"><div class="mini-stat-num" style="color:var(--accent)">${all.length}</div><div class="mini-stat-label">เมนูทั้งหมด</div></div>
+    <div class="mini-stat"><div class="mini-stat-num" style="color:var(--green)">${avail}</div><div class="mini-stat-label">พร้อมขาย</div></div>
+    <div class="mini-stat"><div class="mini-stat-num" style="color:var(--red)">${all.length - avail}</div><div class="mini-stat-label">ปิดชั่วคราว</div></div>
+  `;
+}
+
+function renderList() {
+  const menu = getMenu();
+  const items = menu[currentCat] || [];
+  const el = document.getElementById('menuList');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-list">ยังไม่มีเมนูในหมวดนี้<br>กด "+ เพิ่มเมนูใหม่" ได้เลย</div>';
+    return;
+  }
+  el.innerHTML = items.map(item => `
+    <div class="menu-row" id="row-${item.id}">
+      <div class="row-emoji">${item.emoji}</div>
+      <div class="row-info">
+        <div class="row-name">${item.name}</div>
+        <div class="row-desc">${item.desc}</div>
+        <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">
+          ${item.tag ? `<div class="row-tag">${item.tag}</div>` : ''}
+          ${item.available === false ? '<div class="unavail-badge">⛔ ปิดชั่วคราว</div>' : ''}
+        </div>
+      </div>
+      <div class="row-price">฿${item.price}</div>
+      <label class="toggle" title="${item.available===false?'เปิดขาย':'ปิดชั่วคราว'}">
+        <input type="checkbox" ${item.available!==false?'checked':''} onchange="toggleAvail(${item.id})">
+        <span class="slider"></span>
+      </label>
+      <div class="row-actions">
+        <button class="btn-edit" onclick="editItem(${item.id})">✏ แก้ไข</button>
+        <button class="btn-del" onclick="openDelDialog(${item.id})">🗑</button>
+      </div>
+    </div>
+  `).join('');
+  renderStats();
+}
+
+function toggleAvail(id) {
+  const menu = getMenu();
+  for (const cat of Object.values(menu)) {
+    const item = cat.find(i => i.id === id);
+    if (item) {
+      item.available = item.available === false ? true : false;
+      saveMenu(menu);
+      showToast(item.available ? `✅ เปิดขาย "${item.name}" แล้ว` : `⛔ ปิด "${item.name}" ชั่วคราว`);
+      renderList();
+      return;
+    }
+  }
+}
+
+// EMOJI PICKER
+function buildEmojiPicker(selected) {
+  selectedEmoji = selected || EMOJIS[0];
+  document.getElementById('emojiRow').innerHTML = EMOJIS.map(e => `
+    <div class="emoji-opt${e === selectedEmoji ? ' selected' : ''}" onclick="selectEmoji('${e}')" title="${e}">${e}</div>
+  `).join('');
+}
+
+function selectEmoji(e) {
+  selectedEmoji = e;
+  buildEmojiPicker(e);
+}
+
+// FORM
+function openAddForm() {
+  editingId = null;
+  document.getElementById('formTitle').textContent = '// เพิ่มเมนูใหม่';
+  document.getElementById('fName').value = '';
+  document.getElementById('fDesc').value = '';
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fTag').value = '';
+  document.getElementById('fCat').value = currentCat;
+  buildEmojiPicker('🍔');
+  document.getElementById('fName').focus();
+}
+
+function editItem(id) {
+  const menu = getMenu();
+  let item = null;
+  for (const [cat, items] of Object.entries(menu)) {
+    const found = items.find(i => i.id === id);
+    if (found) { item = found; break; }
+  }
+  if (!item) return;
+  editingId = id;
+  document.getElementById('formTitle').textContent = `// แก้ไข — ${item.name}`;
+  document.getElementById('fName').value = item.name;
+  document.getElementById('fDesc').value = item.desc;
+  document.getElementById('fPrice').value = item.price;
+  document.getElementById('fTag').value = item.tag || '';
+  document.getElementById('fCat').value = currentCat;
+  buildEmojiPicker(item.emoji);
+  document.getElementById('fName').focus();
+}
+
+function resetForm() {
+  editingId = null;
+  document.getElementById('formTitle').textContent = '// เพิ่มเมนูใหม่';
+  document.getElementById('fName').value = '';
+  document.getElementById('fDesc').value = '';
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fTag').value = '';
+  buildEmojiPicker('🍔');
+}
+
+function saveItem() {
+  const name = document.getElementById('fName').value.trim();
+  const desc = document.getElementById('fDesc').value.trim();
+  const price = parseInt(document.getElementById('fPrice').value);
+  const tag = document.getElementById('fTag').value.trim();
+  const cat = document.getElementById('fCat').value;
+
+  if (!name) { showToast('⚠ กรุณาใส่ชื่อเมนู', 'var(--red)'); return; }
+  if (!price || price <= 0) { showToast('⚠ กรุณาใส่ราคา', 'var(--red)'); return; }
+  if (!desc) { showToast('⚠ กรุณาใส่รายละเอียด', 'var(--red)'); return; }
+
+  const menu = getMenu();
+
+  if (editingId !== null) {
+    // Edit existing
+    for (const items of Object.values(menu)) {
+      const idx = items.findIndex(i => i.id === editingId);
+      if (idx !== -1) {
+        items[idx] = { ...items[idx], name, desc, price, tag, emoji: selectedEmoji };
+        break;
+      }
+    }
+    showToast(`✅ แก้ไข "${name}" เรียบร้อย`);
+  } else {
+    // Add new — generate unique id
+    const allIds = [...menu.burger, ...menu.sides, ...menu.drinks].map(i => i.id);
+    const newId = Math.max(...allIds, 0) + 1;
+    menu[cat].push({ id: newId, name, desc, price, tag, emoji: selectedEmoji, available: true });
+    showToast(`✅ เพิ่ม "${name}" เรียบร้อย`);
+  }
+
+  saveMenu(menu);
+  resetForm();
+  renderList();
+}
+
+// DELETE
+function openDelDialog(id) {
+  const menu = getMenu();
+  let item = null;
+  for (const items of Object.values(menu)) { const f = items.find(i=>i.id===id); if(f){item=f;break;} }
+  if (!item) return;
+  deleteTargetId = id;
+  document.getElementById('delName').textContent = `${item.emoji} ${item.name} — ฿${item.price}`;
+  document.getElementById('delOverlay').classList.add('open');
+}
+
+function closeDelDialog() {
+  deleteTargetId = null;
+  document.getElementById('delOverlay').classList.remove('open');
+}
+
+function confirmDelete() {
+  if (!deleteTargetId) return;
+  const menu = getMenu();
+  for (const cat of Object.keys(menu)) {
+    const idx = menu[cat].findIndex(i => i.id === deleteTargetId);
+    if (idx !== -1) {
+      const name = menu[cat][idx].name;
+      menu[cat].splice(idx, 1);
+      saveMenu(menu);
+      showToast(`🗑 ลบ "${name}" แล้ว`, 'var(--red)');
+      closeDelDialog();
+      renderList();
+      return;
+    }
+  }
+}
+
+document.getElementById('delOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeDelDialog();
+});
+
+// INIT
+buildEmojiPicker('🍔');
+renderList();
+renderStats();
+</script>
+</body>
+</html>
