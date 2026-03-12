@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fleggfoods — สั่งอาหาร</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { background:#1a0a00; color:#f5e6c8; font-family:'Lato',sans-serif; font-size:18px; }
+
+  .header {
+    background:#0d0500; border-bottom:3px solid #c8801a;
+    padding:18px 24px; display:flex; align-items:center;
+    justify-content:space-between; position:sticky; top:0; z-index:100;
+  }
+  .logo { font-family:'Playfair Display',serif; font-size:2rem; font-weight:900; color:#f0a830; letter-spacing:2px; }
+  .cart-badge { background:#c8801a; color:#fff; border-radius:999px; padding:10px 22px; font-size:1rem; font-weight:700; }
+
+  /* NAME FIELD */
+  .name-section {
+    background:linear-gradient(135deg,#2a1000,#1a0800);
+    border-bottom:3px solid #f0a830;
+    padding:24px 24px 20px;
+  }
+  .name-label {
+    font-size:1rem; color:#f0a830; text-transform:uppercase;
+    letter-spacing:2px; font-weight:900; margin-bottom:12px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .name-input-wrap { position:relative; }
+  .name-icon {
+    position:absolute; left:18px; top:50%;
+    transform:translateY(-50%); font-size:1.6rem; pointer-events:none;
+  }
+  .name-input {
+    width:100%; background:#0d0500;
+    border:3px solid #c8801a; color:#f5e6c8;
+    border-radius:14px; padding:18px 20px 18px 58px;
+    font-family:'Lato',sans-serif; font-size:1.2rem; font-weight:700;
+    outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  .name-input::placeholder { color:#5a3a10; font-weight:400; }
+  .name-input:focus { border-color:#f0a830; box-shadow:0 0 0 4px rgba(240,168,48,0.25); }
+  .name-input.error { border-color:#e74c3c; box-shadow:0 0 0 4px rgba(231,76,60,0.25); }
+
+  .fries-banner { background:#c0392b; color:#fff; text-align:center; padding:12px; font-weight:900; font-size:1rem; letter-spacing:1.5px; }
+
+  .tabs { display:flex; background:#0d0500; border-bottom:2px solid #3a1a00; }
+  .tab { flex:1; padding:16px 8px; text-align:center; cursor:pointer; font-size:1rem; font-weight:700; color:#8a6040; border-bottom:3px solid transparent; transition:all 0.2s; user-select:none; }
+  .tab.active { color:#f0a830; border-bottom:3px solid #f0a830; background:#1a0a00; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px; padding:24px; max-width:1100px; margin:0 auto; }
+  .grid.hidden { display:none !important; }
+
+  .card { background:#0d0500; border:2px solid #3a1a00; border-radius:16px; padding:22px; display:flex; flex-direction:column; gap:12px; transition:border-color 0.2s; }
+  .card:hover { border-color:#c8801a; }
+  .card.unavailable { opacity:0.4; pointer-events:none; }
+  .card-emoji { font-size:3rem; line-height:1; }
+  .card-tag { background:#3a1a00; color:#f0a830; font-size:0.8rem; letter-spacing:1.5px; text-transform:uppercase; padding:4px 12px; border-radius:99px; display:inline-block; width:fit-content; font-weight:700; }
+  .card-name { font-family:'Playfair Display',serif; font-size:1.35rem; color:#f5e6c8; font-weight:700; }
+  .card-desc { font-size:0.92rem; color:#8a6040; line-height:1.6; }
+  .sold-out { font-size:0.85rem; color:#e74c3c; font-weight:700; }
+  .card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:4px; gap:10px; }
+  .price { font-family:'Playfair Display',serif; font-size:1.5rem; color:#f0a830; font-weight:700; flex-shrink:0; }
+
+  .add-btn {
+    background:#c8801a; border:none; color:#fff;
+    padding:12px 24px; border-radius:99px;
+    font-size:1rem; font-weight:700; cursor:pointer;
+    transition:background 0.15s; user-select:none; flex-shrink:0;
+  }
+  .add-btn:active { background:#f0a830; }
+
+  .qty-ctrl { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .qty-btn {
+    background:#3a1a00; border:none; color:#f5e6c8;
+    width:40px; height:40px; border-radius:50%;
+    font-size:1.4rem; cursor:pointer; user-select:none;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.15s; flex-shrink:0;
+  }
+  .qty-btn:active { background:#c8801a; }
+  .qty-num { font-size:1.2rem; font-weight:700; min-width:24px; text-align:center; }
+
+  .cart-panel { max-width:700px; margin:0 auto; padding:0 24px 40px; }
+  .cart-title { font-family:'Playfair Display',serif; font-size:1.7rem; color:#f0a830; margin-bottom:18px; border-bottom:2px solid #3a1a00; padding-bottom:12px; padding-top:28px; }
+  .cart-item { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid #1e0d00; }
+  .cart-item-name { flex:1; font-size:1rem; }
+  .cart-total { display:flex; justify-content:space-between; align-items:center; padding:20px 0 12px; }
+  .total-label { font-size:1rem; color:#8a6040; text-transform:uppercase; letter-spacing:1px; }
+  .total-amount { font-family:'Playfair Display',serif; font-size:2.2rem; color:#f0a830; font-weight:700; }
+
+  .note-input { width:100%; background:#0d0500; border:2px solid #3a1a00; color:#f5e6c8; border-radius:12px; padding:14px 18px; font-family:'Lato',sans-serif; font-size:1rem; margin-top:4px; outline:none; resize:none; transition:border-color 0.2s; }
+  .note-input:focus { border-color:#c8801a; }
+
+  .order-btn {
+    width:100%; padding:20px; background:#c8801a; border:none;
+    border-radius:14px; color:#fff; font-family:'Playfair Display',serif;
+    font-size:1.35rem; font-weight:700; cursor:pointer; margin-top:18px;
+    letter-spacing:1px; transition:background 0.15s; user-select:none;
+  }
+  .order-btn:active { background:#f0a830; }
+  .order-btn:disabled { background:#5a3a10; color:#888; cursor:not-allowed; }
+
+  /* WAITING */
+  .waiting-page { display:none; text-align:center; padding:60px 24px; }
+  .waiting-id { font-family:'Playfair Display',serif; font-size:4rem; color:#f0a830; margin:14px 0; font-weight:900; }
+  .waiting-title { font-family:'Playfair Display',serif; font-size:1.7rem; color:#f5e6c8; margin-bottom:10px; }
+  .waiting-sub { color:#8a6040; font-size:1rem; margin-bottom:32px; }
+  .status-track { display:flex; align-items:center; justify-content:center; margin:36px auto; max-width:440px; }
+  .status-step { display:flex; flex-direction:column; align-items:center; gap:10px; flex:1; }
+  .step-circle { width:58px; height:58px; border-radius:50%; border:2px solid #3a1a00; background:#0d0500; display:flex; align-items:center; justify-content:center; font-size:1.5rem; transition:all 0.5s; }
+  .step-circle.active { border-color:#f0a830; background:#3a1a00; box-shadow:0 0 20px rgba(240,168,48,0.4); }
+  .step-circle.done { border-color:#2ecc71; background:#0d2a1a; }
+  .step-label { font-size:0.85rem; color:#8a6040; text-align:center; }
+  .step-label.active { color:#f0a830; font-weight:700; }
+  .step-label.done { color:#2ecc71; font-weight:700; }
+  .step-line { height:2px; flex:1; background:#3a1a00; margin-top:-22px; transition:background 0.5s; }
+  .step-line.done { background:#2ecc71; }
+  .spinner { width:48px; height:48px; border:4px solid #3a1a00; border-top-color:#f0a830; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 20px; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* READY */
+  .ready-page { display:none; text-align:center; padding:60px 24px; animation:popIn 0.5s ease; }
+  @keyframes popIn { 0%{transform:scale(0.8);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
+  .ready-icon { font-size:7rem; margin-bottom:18px; animation:bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-12px)} }
+  .ready-title { font-family:'Playfair Display',serif; font-size:2.5rem; color:#2ecc71; margin-bottom:12px; }
+  .ready-sub { color:#8a6040; font-size:1.05rem; line-height:2; margin-bottom:28px; }
+  .ready-id { font-family:'Playfair Display',serif; font-size:2.8rem; color:#f0a830; }
+  .order-again-btn { background:transparent; border:3px solid #c8801a; color:#c8801a; padding:14px 36px; border-radius:99px; font-size:1.05rem; font-weight:700; cursor:pointer; margin-top:24px; transition:all 0.2s; }
+  .order-again-btn:active { background:#c8801a; color:#fff; }
+
+  .order-summary { background:#0d0500; border:1px solid #3a1a00; border-radius:14px; padding:18px; margin:18px auto; max-width:380px; text-align:left; }
+  .order-summary-item { display:flex; gap:12px; padding:8px 0; font-size:0.95rem; border-bottom:1px solid #1e0d00; }
+  .order-summary-item:last-child { border-bottom:none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Fleggfoods</div>
+  <div class="cart-badge" id="cartBadge">🛒 0 · ฿0</div>
+</div>
+
+<div id="mainContent">
+
+  <div class="name-section">
+    <div class="name-label">🪑 โต๊ะ / ชื่อของคุณ</div>
+    <div class="name-input-wrap">
+      <span class="name-icon">👤</span>
+      <input class="name-input" id="tableInput" type="text" placeholder="กรอกชื่อหรือหมายเลขโต๊ะก่อนสั่ง..." autocomplete="off">
+    </div>
+  </div>
+
+  <div class="fries-banner">🍟 ALL BURGERS AND STEAKS COME WITH FRIES</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('burger',this)">🍔 Burgers</div>
+    <div class="tab" onclick="switchTab('steak',this)">🥩 Steak</div>
+    <div class="tab" onclick="switchTab('drinks',this)">🥤 Drinks</div>
+  </div>
+
+  <div id="tab-burger" class="grid"></div>
+  <div id="tab-steak" class="grid hidden"></div>
+  <div id="tab-drinks" class="grid hidden"></div>
+
+  <div class="cart-panel" id="cartPanel" style="display:none">
+    <div class="cart-title">📋 รายการสั่ง</div>
+    <div id="cartItems"></div>
+    <div class="cart-total">
+      <span class="total-label">ยอดรวม</span>
+      <span class="total-amount" id="cartTotal">฿0</span>
+    </div>
+    <textarea class="note-input" id="noteInput" rows="2" placeholder="📝 โน้ตพิเศษ เช่น No onions, Extra sauce..."></textarea>
+    <button class="order-btn" id="orderBtn" onclick="placeOrder()">🚀 ส่งออเดอร์ไปครัว</button>
+  </div>
+</div>
+
+<div class="waiting-page" id="waitingPage">
+  <div class="spinner"></div>
+  <div class="waiting-title">Order sent to kitchen!</div>
+  <div class="waiting-id" id="waitingId">#0001</div>
+  <div class="waiting-sub" id="waitingTable"></div>
+  <div class="status-track">
+    <div class="status-step">
+      <div class="step-circle active" id="step1">📋</div>
+      <div class="step-label active" id="label1">รับออเดอร์</div>
+    </div>
+    <div class="step-line" id="line1"></div>
+    <div class="status-step">
+      <div class="step-circle" id="step2">🔥</div>
+      <div class="step-label" id="label2">กำลังทำ</div>
+    </div>
+    <div class="step-line" id="line2"></div>
+    <div class="status-step">
+      <div class="step-circle" id="step3">✅</div>
+      <div class="step-label" id="label3">พร้อมเสิร์ฟ</div>
+    </div>
+  </div>
+  <div class="waiting-sub">กรุณารอสักครู่ ครัวกำลังเตรียมอาหารให้คุณ 👨‍🍳</div>
+  <div class="order-summary" id="waitingSummary"></div>
+</div>
+
+<div class="ready-page" id="readyPage">
+  <div class="ready-icon">🍔</div>
+  <div class="ready-title">อาหารพร้อมแล้ว!</div>
+  <div class="ready-sub">
+    Order <span class="ready-id" id="readyId">#0001</span><br>
+    <span id="readyTable"></span><br>
+    Please collect your food 🙏
+  </div>
+  <div class="order-summary" id="readySummary"></div>
+  <button class="order-again-btn" onclick="resetOrder()">🍔 สั่งอาหารอีกรอบ</button>
+</div>
+
+<script>
+const DB = 'https://fleggfoods-b75d6-c7e3d-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+const DEFAULT_MENU = {
+  burger: [
+    {id:1, name:"England", desc:"Our signature burger sauce, caramalised onions, cheddar cheese and pickles", price:250, emoji:"🍔", tag:"Beef", available:true},
+    {id:2, name:"USA", desc:"Classic cheeseburger with our homemade pickles, ketchup, mustard, onions", price:250, emoji:"🍔", tag:"Beef", available:true},
+    {id:3, name:"Australia", desc:"BBQ sauce, red onions, pickles, cheese", price:200, emoji:"🍔", tag:"Pork", available:true},
+    {id:4, name:"Thailand", desc:"Cheeseburger with our homemade pickled Thai chillies and jim jeaw sauce", price:200, emoji:"🌶️", tag:"Pork", available:true},
+    {id:5, name:"Breakfast Sausage Bap", desc:"Pork patty, cheese and a hashbrown with your choice of sauce", price:200, emoji:"🥓", tag:"", available:true},
+    {id:6, name:"Double Up", desc:"Get an extra patty in your burger for a really filling treat", price:50, emoji:"🍔", tag:"+Add On", available:true},
+  ],
+  steak: [
+    {id:10, name:"Beef Ribeye", desc:"A mouthwatering rib eye steak that's perfectly marbled and bursting with rich flavor", price:250, emoji:"🥩", tag:"", available:true},
+    {id:11, name:"Beef Sirloin", desc:"Lean, meaty sirloin for those that like a bit of bite", price:250, emoji:"🥩", tag:"", available:true},
+    {id:12, name:"Pork Loin", desc:"A succulent and tender cut, offering a lean and flavorful mouthful", price:200, emoji:"🥩", tag:"", available:true},
+  ],
+  drinks: [
+    {id:20, name:"โคล่า", desc:"เย็นสดชื่น", price:39, emoji:"🥤", tag:"", available:true},
+    {id:21, name:"น้ำเปล่า", desc:"น้ำดื่มสะอาด", price:20, emoji:"💧", tag:"", available:true},
+    {id:22, name:"น้ำส้ม", desc:"คั้นสดทุกวัน", price:49, emoji:"🍊", tag:"", available:true},
+  ]
+};
+
+// Firebase
+async function fbGet(path) {
+  try { const r = await fetch(DB+path+'.json'); return await r.json(); } catch(e){ return null; }
+}
+async function fbSet(path, data) {
+  try { await fetch(DB+path+'.json', {method:'PUT',body:JSON.stringify(data)}); } catch(e){}
+}
+
+// Sound
+let audioCtx = null;
+function getACtx() { if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function playMelody() {
+  try {
+    const ctx=getACtx(); ctx.resume();
+    [[523,0,.15],[659,.18,.15],[784,.36,.15],[1047,.54,.3]].forEach(([f,s,d])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.frequency.value=f; o.type='sine';
+      g.gain.setValueAtTime(0,ctx.currentTime+s);
+      g.gain.linearRampToValueAtTime(0.6,ctx.currentTime+s+.01);
+      g.gain.linearRampToValueAtTime(0,ctx.currentTime+s+d);
+      o.start(ctx.currentTime+s); o.stop(ctx.currentTime+s+d+.05);
+    });
+  } catch(e){}
+}
+function playReadySound() {
+  const d=localStorage.getItem('flegg_sound_ready');
+  if(d){ try{const a=new Audio(d);a.volume=.9;a.play().catch(playMelody);}catch(e){playMelody();} } else playMelody();
+}
+document.addEventListener('click',()=>{try{getACtx().resume();}catch(e){}},{once:true});
+
+// State
+let cart = {};
+let loadedMenu = null;
+let currentOrderId = null;
+let orderListener = null;
+
+function findItem(id) {
+  const menu = loadedMenu || DEFAULT_MENU;
+  for (const items of Object.values(menu)) {
+    const f = items.find(i => String(i.id) === String(id));
+    if (f) return f;
+  }
+  return null;
+}
+
+function buildCard(item) {
+  const avail = item.available !== false;
+  const qty = (cart[item.id] || {}).qty || 0;
+  const imgHtml = item.image
+    ? `<img src="${item.image}" alt="${item.name}" style="width:100%;height:150px;object-fit:cover;border-radius:10px;">`
+    : `<div class="card-emoji">${item.emoji||'🍔'}</div>`;
+  const tagHtml = item.tag ? `<div class="card-tag">${item.tag}</div>` : '';
+  const soldHtml = !avail ? '<div class="sold-out">⛔ Sold out</div>' : '';
+  let ctrlHtml = '';
+  if (avail) {
+    if (qty === 0) {
+      ctrlHtml = `<button class="add-btn" onclick="addItem('${item.id}')">+ Add</button>`;
+    } else {
+      ctrlHtml = `<div class="qty-ctrl">
+        <button class="qty-btn" onclick="removeItem('${item.id}')">−</button>
+        <span class="qty-num">${qty}</span>
+        <button class="qty-btn" onclick="addItem('${item.id}')">+</button>
+      </div>`;
+    }
+  }
+  return `<div class="card${avail?'':' unavailable'}">
+    ${imgHtml}${tagHtml}
+    <div class="card-name">${item.name}</div>
+    <div class="card-desc">${item.desc}</div>
+    ${soldHtml}
+    <div class="card-footer"><div class="price">฿${item.price}</div>${ctrlHtml}</div>
+  </div>`;
+}
+
+function renderMenu() {
+  const menu = loadedMenu || DEFAULT_MENU;
+  ['burger','steak','drinks'].forEach(cat => {
+    const el = document.getElementById('tab-'+cat);
+    if (!el) return;
+    const items = menu[cat] || [];
+    el.innerHTML = items.length ? items.map(buildCard).join('') : `<p style="padding:24px;color:#8a6040">ไม่มีเมนูในหมวดนี้</p>`;
+  });
+}
+
+function addItem(id) {
+  const item = findItem(id);
+  if (!item) return;
+  if (!cart[id]) cart[id] = {...item, qty:0};
+  cart[id].qty++;
+  updateCart();
+  renderMenu();
+}
+
+function removeItem(id) {
+  if (!cart[id]) return;
+  cart[id].qty--;
+  if (cart[id].qty <= 0) delete cart[id];
+  updateCart();
+  renderMenu();
+}
+
+function updateCart() {
+  const items = Object.values(cart);
+  const qty = items.reduce((s,i)=>s+i.qty,0);
+  const total = items.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('cartBadge').textContent = `🛒 ${qty} · ฿${total.toLocaleString()}`;
+  const panel = document.getElementById('cartPanel');
+  if (!items.length) { panel.style.display='none'; return; }
+  panel.style.display = 'block';
+  document.getElementById('cartItems').innerHTML = items.map(i=>`
+    <div class="cart-item">
+      <span style="font-size:1.4rem">${i.emoji||'🍔'}</span>
+      <span class="cart-item-name">${i.name}</span>
+      <span style="color:#8a6040">x${i.qty}</span>
+      <span style="color:#f0a830;font-family:'Playfair Display',serif;font-size:1.1rem">฿${(i.price*i.qty).toLocaleString()}</span>
+    </div>`).join('');
+  document.getElementById('cartTotal').textContent = `฿${total.toLocaleString()}`;
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['burger','steak','drinks'].forEach(c=>{
+    const g=document.getElementById('tab-'+c);
+    c===tab ? g.classList.remove('hidden') : g.classList.add('hidden');
+  });
+}
+
+function summaryHtml(items, note) {
+  return items.map(i=>`
+    <div class="order-summary-item">
+      <span>${i.emoji||'🍔'}</span>
+      <span style="flex:1">${i.name}</span>
+      <span style="color:#8a6040">x${i.qty}</span>
+      <span style="color:#f0a830">฿${(i.price*i.qty).toLocaleString()}</span>
+    </div>`).join('') +
+    (note?`<div style="font-size:.85rem;color:#8a6040;margin-top:10px;padding-top:10px;border-top:1px solid #1e0d00">📝 ${note}</div>`:'');
+}
+
+async function placeOrder() {
+  const tableEl = document.getElementById('tableInput');
+  const table = tableEl.value.trim();
+  const note = document.getElementById('noteInput').value.trim();
+  const items = Object.values(cart);
+
+  if (!table) {
+    tableEl.classList.add('error');
+    tableEl.focus();
+    setTimeout(()=>tableEl.classList.remove('error'), 2500);
+    return;
+  }
+  if (!items.length) { alert('กรุณาเลือกเมนูอย่างน้อย 1 รายการ'); return; }
+
+  const btn = document.getElementById('orderBtn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
+
+  const orderId = Date.now();
+  await fbSet(`/orders/${orderId}`, {
+    id:orderId, table, note,
+    items: items.map(i=>({id:i.id,name:i.name,emoji:i.emoji||'🍔',price:i.price,qty:i.qty})),
+    status:'new', createdAt:orderId
+  });
+  currentOrderId = orderId;
+
+  document.getElementById('waitingId').textContent = '#'+String(orderId).slice(-4);
+  document.getElementById('waitingTable').textContent = `🪑 ${table}`;
+  document.getElementById('waitingSummary').innerHTML = summaryHtml(items, note);
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('waitingPage').style.display = 'block';
+
+  btn.disabled = false; btn.textContent = '🚀 ส่งออเดอร์ไปครัว';
+  listenOrder(orderId, items, note, table);
+}
+
+function listenOrder(orderId, items, note, table) {
+  if (orderListener) { try{orderListener.close();}catch(e){} }
+  try {
+    orderListener = new EventSource(`${DB}/orders/${orderId}.json`);
+    orderListener.addEventListener('put', e => {
+      try {
+        const d = JSON.parse(e.data);
+        const order = d.data || d;
+        if (!order||!order.status) return;
+        if (order.status==='cooking') setStep(2);
+        else if (order.status==='done') { setStep(3); orderListener.close(); setTimeout(()=>showReady(orderId,items,note,table),800); }
+      } catch(err){}
+    });
+    orderListener.onerror = () => { orderListener.close(); pollOrder(orderId,items,note,table); };
+  } catch(e) { pollOrder(orderId,items,note,table); }
+}
+
+function pollOrder(orderId, items, note, table) {
+  const iv = setInterval(async()=>{
+    const o = await fbGet(`/orders/${orderId}`);
+    if (!o) return;
+    if (o.status==='cooking') setStep(2);
+    else if (o.status==='done') { clearInterval(iv); setStep(3); setTimeout(()=>showReady(orderId,items,note,table),800); }
+  }, 3000);
+}
+
+function setStep(n) {
+  for (let i=1;i<=3;i++) {
+    document.getElementById('step'+i).className = i<n?'step-circle done':i===n?'step-circle active':'step-circle';
+    document.getElementById('label'+i).className = i<n?'step-label done':i===n?'step-label active':'step-label';
+    if(i<3) document.getElementById('line'+i).className = i<n?'step-line done':'step-line';
+  }
+}
+
+function showReady(orderId, items, note, table) {
+  document.getElementById('readyId').textContent = '#'+String(orderId).slice(-4);
+  document.getElementById('readyTable').textContent = `🪑 ${table}`;
+  document.getElementById('readySummary').innerHTML = summaryHtml(items,note);
+  document.getElementById('waitingPage').style.display = 'none';
+  document.getElementById('readyPage').style.display = 'block';
+  document.title = '🍔 อาหารพร้อมแล้ว! — Fleggfoods';
+  playReadySound(); setTimeout(playReadySound,2500); setTimeout(playReadySound,5000);
+}
+
+function resetOrder() {
+  if(orderListener){try{orderListener.close();}catch(e){} orderListener=null;}
+  currentOrderId=null; cart={};
+  document.getElementById('mainContent').style.display='block';
+  document.getElementById('waitingPage').style.display='none';
+  document.getElementById('readyPage').style.display='none';
+  document.getElementById('cartPanel').style.display='none';
+  document.getElementById('cartBadge').textContent='🛒 0 · ฿0';
+  document.getElementById('tableInput').value='';
+  document.getElementById('noteInput').value='';
+  document.title='Fleggfoods — สั่งอาหาร';
+  setStep(1); renderMenu();
+}
+
+async function loadMenu() {
+  loadedMenu = DEFAULT_MENU;
+  renderMenu();
+  try {
+    const saved = await fbGet('/menu');
+    if (saved && typeof saved==='object' && Object.keys(saved).length>0) {
+      loadedMenu = saved; renderMenu();
+    }
+  } catch(e){}
+}
+
+loadMenu();
+</script>
+</body>
+</html>
