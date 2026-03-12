@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fleggfoods</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@400;700;900&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Lato',sans-serif;min-height:100vh;background:#1a0a00;color:#f5e6c8;font-size:17px}
+
+/* ── PAGE VISIBILITY ─────────────────── */
+.page{display:none}
+.page.active{display:block}
+#pg-home.active{display:flex}
+#pg-pin.active{display:flex}
+
+/* ── HOME ──────────────────────────────── */
+#pg-home{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;
+  background:radial-gradient(ellipse at 50% 0%,#3a1000 0%,#0d0500 55%,#000 100%);
+  padding:40px 24px;text-align:center}
+.home-icon{font-size:5rem;margin-bottom:16px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.home-logo{font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;color:#f0a830;letter-spacing:4px;margin-bottom:6px}
+.home-tagline{color:#8a6040;font-size:.9rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:52px}
+.home-btns{display:flex;flex-direction:column;gap:14px;width:100%;max-width:320px}
+.hbtn{width:100%;padding:20px;border:none;border-radius:16px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s;letter-spacing:.5px;font-family:'Lato',sans-serif}
+.hbtn:active{transform:scale(.97)}
+.hbtn-order{background:linear-gradient(135deg,#c8801a,#f0a830);color:#000;box-shadow:0 6px 24px rgba(200,128,26,.45)}
+.hbtn-kitchen{background:#181b24;color:#e8eaf0;border:1px solid #252a38}
+.hbtn-admin{background:transparent;color:#5a6275;border:2px solid #252a38;font-size:.95rem}
+
+/* ── PIN ──────────────────────────────── */
+#pg-pin{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;
+  background:#0d0500;padding:24px;text-align:center}
+.pin-icon{font-size:2.5rem;margin-bottom:12px}
+.pin-title{font-family:'Playfair Display',serif;font-size:1.5rem;color:#f0a830;margin-bottom:4px}
+.pin-sub{color:#8a6040;font-size:.88rem;margin-bottom:28px}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin-bottom:28px}
+.pin-dot{width:18px;height:18px;border-radius:50%;background:#3a1a00;border:2px solid #8a6040;transition:all .2s}
+.pin-dot.filled{background:#f0a830;border-color:#f0a830;box-shadow:0 0 10px rgba(240,168,48,.5)}
+.pin-dot.error{background:#e74c3c;border-color:#e74c3c;animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;max-width:260px;width:100%}
+.pbtn{padding:19px;background:#181b24;border:1px solid #252a38;border-radius:13px;
+  font-size:1.45rem;font-weight:700;color:#e8eaf0;cursor:pointer;transition:all .14s;
+  font-family:'IBM Plex Mono',monospace}
+.pbtn:active{background:#252a38;transform:scale(.94)}
+.pbtn.del{font-size:1rem;color:#5a6275}
+.pin-back{margin-top:22px;background:transparent;border:none;color:#5a6275;font-size:.88rem;cursor:pointer;padding:10px;font-family:'Lato',sans-serif}
+.pin-err-msg{color:#e74c3c;font-size:.85rem;margin-top:12px;height:20px}
+
+/* ── SHARED HEADER ────────────────────── */
+.app-bar{background:#0d0500;border-bottom:3px solid #c8801a;padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.app-bar-logo{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:900;color:#f0a830}
+.bar-right{display:flex;align-items:center;gap:10px}
+.back-btn{background:rgba(200,128,26,.15);border:1px solid rgba(200,128,26,.35);
+  color:#c8801a;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Lato',sans-serif}
+.cart-pill{background:#c8801a;color:#000;border-radius:99px;padding:8px 17px;font-size:.9rem;font-weight:900}
+
+/* ── ORDER – NAME BAR ─────────────────── */
+.name-bar{background:linear-gradient(135deg,#2a1000,#1a0800);border-bottom:3px solid #f0a830;padding:18px 20px}
+.name-lbl{font-size:.8rem;color:#f0a830;text-transform:uppercase;letter-spacing:2px;font-weight:900;margin-bottom:9px}
+.name-wrap{position:relative}
+.name-ico{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:1.4rem;pointer-events:none}
+.name-inp{width:100%;background:#0d0500;border:3px solid #c8801a;color:#f5e6c8;
+  border-radius:12px;padding:15px 15px 15px 50px;font-size:1.1rem;font-weight:700;
+  outline:none;transition:border-color .2s,box-shadow .2s;font-family:'Lato',sans-serif}
+.name-inp::placeholder{color:#5a3a10;font-weight:400}
+.name-inp:focus{border-color:#f0a830;box-shadow:0 0 0 4px rgba(240,168,48,.2)}
+.name-inp.err{border-color:#e74c3c;box-shadow:0 0 0 4px rgba(231,76,60,.25);animation:shake .35s ease}
+
+.fries-bar{background:#c0392b;color:#fff;text-align:center;padding:10px;font-weight:900;font-size:.88rem;letter-spacing:1.5px}
+
+/* ── TABS ────────────────────────────── */
+.tabs{display:flex;background:#0d0500;border-bottom:2px solid #3a1a00}
+.tab-btn{flex:1;padding:14px 6px;text-align:center;cursor:pointer;font-size:.92rem;font-weight:700;
+  color:#8a6040;border-bottom:3px solid transparent;transition:all .2s;user-select:none}
+.tab-btn.on{color:#f0a830;border-bottom-color:#f0a830;background:#1a0a00}
+
+/* ── MENU GRID ──────────────────────── */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:15px;padding:18px;max-width:1100px;margin:0 auto}
+.mgrid.off{display:none!important}
+.mcard{background:#0d0500;border:2px solid #3a1a00;border-radius:14px;padding:19px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s}
+.mcard:hover{border-color:#c8801a}
+.mcard.sold{opacity:.4;pointer-events:none}
+.card-emo{font-size:2.8rem;line-height:1}
+.card-tag{background:#3a1a00;color:#f0a830;font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;
+  padding:3px 10px;border-radius:99px;display:inline-block;width:fit-content;font-weight:700}
+.card-name{font-family:'Playfair Display',serif;font-size:1.2rem;color:#f5e6c8;font-weight:700}
+.card-desc{font-size:.86rem;color:#8a6040;line-height:1.55}
+.sold-lbl{font-size:.82rem;color:#e74c3c;font-weight:700}
+.card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:4px;gap:10px}
+.card-price{font-family:'Playfair Display',serif;font-size:1.4rem;color:#f0a830;font-weight:700;flex-shrink:0}
+.add-btn{background:#c8801a;border:none;color:#fff;padding:11px 20px;border-radius:99px;
+  font-size:.92rem;font-weight:700;cursor:pointer;flex-shrink:0;font-family:'Lato',sans-serif}
+.add-btn:active{background:#f0a830}
+.qty-ctrl{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.qty-btn{background:#3a1a00;border:none;color:#f5e6c8;width:38px;height:38px;border-radius:50%;
+  font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Lato',sans-serif}
+.qty-btn:active{background:#c8801a}
+.qty-n{font-size:1.1rem;font-weight:700;min-width:20px;text-align:center}
+
+/* ── CART ────────────────────────────── */
+.cart-box{max-width:680px;margin:0 auto;padding:0 20px 40px}
+.cart-ttl{font-family:'Playfair Display',serif;font-size:1.55rem;color:#f0a830;
+  border-bottom:2px solid #3a1a00;padding:24px 0 11px;margin-bottom:0}
+.cart-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #3a1a00}
+.cart-name{flex:1;font-size:.93rem}
+.cart-sub{color:#8a6040;font-size:.85rem}
+.cart-price{color:#f0a830;font-family:'Playfair Display',serif;font-size:1rem}
+.cart-total-row{display:flex;justify-content:space-between;align-items:center;padding:17px 0 10px}
+.cart-total-lbl{font-size:.9rem;color:#8a6040;text-transform:uppercase;letter-spacing:1px}
+.cart-total-amt{font-family:'Playfair Display',serif;font-size:2rem;color:#f0a830;font-weight:700}
+.note-inp{width:100%;background:#0d0500;border:2px solid #3a1a00;color:#f5e6c8;
+  border-radius:10px;padding:12px 15px;font-family:'Lato',sans-serif;font-size:.93rem;
+  outline:none;resize:none;transition:border-color .2s}
+.note-inp:focus{border-color:#c8801a}
+.send-btn{width:100%;padding:18px;background:#c8801a;border:none;border-radius:12px;
+  color:#fff;font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;
+  cursor:pointer;margin-top:15px;letter-spacing:1px;font-style:normal}
+.send-btn:active{background:#f0a830}
+.send-btn:disabled{background:#5a3a10;color:#888;cursor:not-allowed}
+
+/* ── WAITING / READY ─────────────────── */
+.wait-box{display:none;text-align:center;padding:50px 20px}
+.wait-spin{width:44px;height:44px;border:4px solid #3a1a00;border-top-color:#f0a830;
+  border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wait-title{font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:8px}
+.wait-id{font-family:'Playfair Display',serif;font-size:3.5rem;color:#f0a830;font-weight:900;margin:10px 0}
+.wait-sub{color:#8a6040;font-size:.92rem;margin-bottom:24px}
+.steps{display:flex;align-items:center;justify-content:center;margin:28px auto;max-width:380px}
+.step{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1}
+.step-c{width:52px;height:52px;border-radius:50%;border:2px solid #3a1a00;background:#0d0500;
+  display:flex;align-items:center;justify-content:center;font-size:1.35rem;transition:all .5s}
+.step-c.on{border-color:#f0a830;background:#3a1a00;box-shadow:0 0 16px rgba(240,168,48,.35)}
+.step-c.done{border-color:#2ecc71;background:#0d2a1a}
+.step-l{font-size:.76rem;color:#8a6040;text-align:center}
+.step-l.on{color:#f0a830;font-weight:700}
+.step-l.done{color:#2ecc71;font-weight:700}
+.step-line{height:2px;flex:1;background:#3a1a00;margin-top:-20px;transition:background .5s}
+.step-line.done{background:#2ecc71}
+
+.ready-box{display:none;text-align:center;padding:50px 20px;animation:popin .5s ease}
+@keyframes popin{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+.ready-ico{font-size:6rem;animation:bob .6s ease infinite alternate}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+.ready-title{font-family:'Playfair Display',serif;font-size:2.2rem;color:#2ecc71;margin:14px 0 10px}
+.ready-sub{color:#8a6040;font-size:.98rem;line-height:2;margin-bottom:22px}
+.ready-id{font-family:'Playfair Display',serif;font-size:2.4rem;color:#f0a830}
+.again-btn{background:transparent;border:3px solid #c8801a;color:#c8801a;padding:12px 30px;
+  border-radius:99px;font-size:.98rem;font-weight:700;cursor:pointer;margin-top:20px;font-family:'Lato',sans-serif}
+.again-btn:active{background:#c8801a;color:#fff}
+
+.sumbox{background:#0d0500;border:1px solid #3a1a00;border-radius:12px;padding:15px;margin:15px auto;max-width:340px;text-align:left}
+.sumrow{display:flex;gap:10px;padding:7px 0;font-size:.88rem;border-bottom:1px solid #3a1a00}
+.sumrow:last-child{border-bottom:none}
+
+/* ── KITCHEN ─────────────────────────── */
+#pg-kitchen{background:#0f1117;min-height:100vh;color:#e8eaf0}
+.k-bar{background:#181b24;border-bottom:1px solid #252a38;padding:12px 18px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.k-logo{font-family:'IBM Plex Mono',monospace;font-size:.95rem;font-weight:700;color:#f5a623;letter-spacing:3px}
+.k-right{display:flex;align-items:center;gap:10px}
+.k-clock{font-family:'IBM Plex Mono',monospace;font-size:1.2rem;font-weight:600;letter-spacing:2px}
+.live-wrap{display:flex;align-items:center;gap:5px}
+.ldot{width:8px;height:8px;border-radius:50%;background:#2ecc71;box-shadow:0 0 7px #2ecc71;animation:pulse 2s infinite}
+.ldot.off{background:#e74c3c;box-shadow:0 0 7px #e74c3c}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.live-lbl{font-size:.7rem;color:#2ecc71;text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace}
+.live-lbl.off{color:#e74c3c}
+.audio-btn{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);
+  color:#f5a623;padding:6px 12px;border-radius:8px;font-size:.76rem;cursor:pointer;font-family:'Lato',sans-serif}
+.audio-btn.on{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#2ecc71;cursor:default}
+.k-stats{display:flex;gap:1px;background:#252a38;border-bottom:1px solid #252a38}
+.k-stat{flex:1;background:#181b24;padding:11px 14px}
+.k-stat-n{font-family:'IBM Plex Mono',monospace;font-size:1.5rem;font-weight:700}
+.k-stat-l{font-size:.65rem;color:#5a6275;text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+@media(max-width:700px){.board{grid-template-columns:1fr}}
+.kcol{border-right:1px solid #252a38;min-height:400px}
+.kcol:last-child{border-right:none}
+.kcol-hd{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:2px solid #252a38;background:#181b24}
+.kcol-title{font-family:'IBM Plex Mono',monospace;font-size:.73rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.ct-new{color:#f5a623}.ct-cooking{color:#3498db}.ct-done{color:#2ecc71}
+.kcol-cnt{font-family:'IBM Plex Mono',monospace;font-size:.7rem;background:#252a38;color:#5a6275;padding:2px 9px;border-radius:99px}
+.kcol-body{padding:10px;display:flex;flex-direction:column;gap:8px}
+.kcard{background:#181b24;border:1px solid #252a38;border-radius:10px;padding:12px;animation:slidein .3s ease}
+@keyframes slidein{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.kcard.urg{border-color:#e74c3c}
+.kcard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.kcard-id{font-family:'IBM Plex Mono',monospace;font-size:.98rem;font-weight:700;color:#f5a623}
+.kcard-table{font-size:.7rem;color:#5a6275;margin-top:2px}
+.ktimer{font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:#5a6275;text-align:right}
+.ktimer.late{color:#e74c3c;font-weight:700}
+.urg-tag{background:#e74c3c;color:#fff;font-size:.6rem;padding:2px 7px;border-radius:99px;font-weight:700;margin-top:3px;display:inline-block}
+.kitems{display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+.kitem{display:flex;align-items:flex-start;gap:7px;background:#0f1117;border-radius:6px;padding:7px 9px}
+.kitem-emo{font-size:.95rem;flex-shrink:0}
+.kitem-name{font-size:.8rem;font-weight:600;flex:1}
+.kitem-note{font-size:.68rem;color:#e05c2a;margin-top:2px}
+.kitem-qty{font-family:'IBM Plex Mono',monospace;font-size:.72rem;background:#252a38;color:#f5a623;padding:2px 7px;border-radius:99px;font-weight:700;flex-shrink:0}
+.kactions{display:flex;gap:6px}
+.kbtn{flex:1;padding:8px;border:none;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Lato',sans-serif}
+.kbtn-start{background:rgba(52,152,219,.15);color:#3498db;border:1px solid rgba(52,152,219,.3)}
+.kbtn-start:hover{background:#3498db;color:#fff}
+.kbtn-done{background:rgba(46,204,113,.15);color:#2ecc71;border:1px solid rgba(46,204,113,.3)}
+.kbtn-done:hover{background:#2ecc71;color:#fff}
+.kbtn-cancel{background:rgba(231,76,60,.1);color:#e74c3c;border:1px solid rgba(231,76,60,.2);flex:0;padding:8px 10px}
+.kbtn-cancel:hover{background:#e74c3c;color:#fff}
+.kbtn-clear{background:rgba(90,98,117,.2);color:#5a6275;border:1px solid #252a38}
+.ktotal{font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:#5a6275;text-align:right;margin-top:6px}
+.ktotal span{color:#f5a623;font-weight:700}
+.kempty{text-align:center;padding:30px 15px;color:#5a6275;font-size:.8rem;line-height:2;opacity:.6}
+.k-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#2ecc71;color:#000;padding:10px 22px;border-radius:99px;font-weight:700;
+  font-size:.86rem;opacity:0;transition:all .35s;z-index:999;pointer-events:none;white-space:nowrap}
+.k-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.k-clear-btn{display:block;margin:16px auto 24px;background:#181b24;color:#5a6275;border:1px solid #252a38;
+  border-radius:99px;padding:9px 20px;font-size:.78rem;cursor:pointer;font-family:'Lato',sans-serif}
+.k-clear-btn:hover{background:#e74c3c;color:#fff;border-color:#e74c3c}
+
+/* ── ADMIN ───────────────────────────── */
+#pg-admin{background:#0f1117;min-height:100vh;color:#e8eaf0}
+.a-bar{background:#181b24;border-bottom:2px solid #f5a623;padding:13px 20px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.a-logo{font-family:'IBM Plex Mono',monospace;font-size:.95rem;font-weight:700;color:#f5a623;letter-spacing:3px}
+.a-badge{background:#e05c2a;color:#fff;font-size:.66rem;padding:3px 10px;border-radius:99px;font-weight:700;letter-spacing:1px}
+.sync-lbl{font-size:.68rem;font-family:'IBM Plex Mono',monospace;color:#2ecc71}
+.a-layout{display:grid;grid-template-columns:1fr 350px;min-height:calc(100vh - 55px)}
+@media(max-width:800px){.a-layout{grid-template-columns:1fr}}
+.a-left{padding:18px;border-right:1px solid #252a38;overflow-y:auto}
+.a-right{padding:20px;background:#181b24;overflow-y:auto}
+@media(max-width:800px){.a-right{display:none}}
+.a-stats{display:flex;gap:9px;margin-bottom:18px}
+.a-stat{flex:1;background:#0f1117;border:1px solid #252a38;border-radius:10px;padding:10px 12px}
+.a-stat-n{font-family:'IBM Plex Mono',monospace;font-size:1.3rem;font-weight:700}
+.a-stat-l{font-size:.64rem;color:#5a6275;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.ctabs{display:flex;gap:7px;margin-bottom:16px}
+.ctab{padding:7px 14px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid #252a38;color:#5a6275;transition:all .2s}
+.ctab.on{background:rgba(245,166,35,.15);border-color:#f5a623;color:#f5a623}
+.a-sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.a-sec-title{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:700;color:#f5a623;letter-spacing:2px;text-transform:uppercase}
+.a-add-btn{background:rgba(245,166,35,.15);color:#f5a623;border:1px solid rgba(245,166,35,.3);
+  padding:6px 13px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Lato',sans-serif}
+.a-add-btn:hover{background:#f5a623;color:#000}
+.mrow{background:#0f1117;border:1px solid #252a38;border-radius:10px;padding:12px 13px;
+  display:flex;align-items:center;gap:11px;margin-bottom:8px;transition:border-color .2s}
+.mrow:hover{border-color:#3a3f52}
+.mrow-emo{font-size:1.7rem;flex-shrink:0}
+.mrow-img{width:44px;height:44px;border-radius:7px;object-fit:cover;flex-shrink:0}
+.mrow-info{flex:1;min-width:0}
+.mrow-name{font-size:.88rem;font-weight:600;color:#e8eaf0}
+.mrow-desc{font-size:.7rem;color:#5a6275;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow-price{font-family:'IBM Plex Mono',monospace;font-size:.9rem;color:#f5a623;font-weight:700;margin-right:5px;flex-shrink:0}
+.mrow-tag{font-size:.6rem;background:rgba(245,166,35,.15);color:#f5a623;padding:2px 7px;border-radius:99px;margin-top:2px;display:inline-block}
+.unavail-lbl{font-size:.6rem;background:rgba(231,76,60,.15);color:#e74c3c;padding:2px 7px;border-radius:99px;margin-top:2px;display:inline-block}
+.mrow-acts{display:flex;gap:5px;flex-shrink:0}
+.r-edit{background:rgba(52,152,219,.15);color:#3498db;border:1px solid rgba(52,152,219,.3);padding:5px 11px;border-radius:7px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:'Lato',sans-serif}
+.r-edit:hover{background:#3498db;color:#fff}
+.r-del{background:rgba(231,76,60,.1);color:#e74c3c;border:1px solid rgba(231,76,60,.2);padding:5px 9px;border-radius:7px;font-size:.73rem;cursor:pointer;font-family:'Lato',sans-serif}
+.r-del:hover{background:#e74c3c;color:#fff}
+.tog{position:relative;display:inline-block;width:37px;height:20px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-sl{position:absolute;cursor:pointer;inset:0;background:#3a1a00;border-radius:99px;transition:.3s}
+.tog-sl:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.tog-sl{background:#2ecc71}
+input:checked+.tog-sl:before{transform:translateX(17px)}
+/* form */
+.form-ttl{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;color:#f5a623;
+  letter-spacing:2px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #252a38}
+.fld{margin-bottom:13px}
+.fld label{display:block;font-size:.66rem;color:#5a6275;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.fld input,.fld select,.fld textarea{width:100%;background:#0f1117;border:1px solid #252a38;
+  color:#e8eaf0;border-radius:8px;padding:9px 11px;font-family:'Lato',sans-serif;font-size:.86rem;outline:none;resize:none;transition:border-color .2s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:#f5a623}
+.fld select option{background:#181b24}
+.emo-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.emo-opt{width:36px;height:36px;border-radius:7px;border:1px solid #252a38;background:#0f1117;
+  display:flex;align-items:center;justify-content:center;font-size:1.15rem;cursor:pointer;transition:all .2s}
+.emo-opt.on{border-color:#f5a623;background:rgba(245,166,35,.15)}
+.img-drop{border:2px dashed #252a38;border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;margin-top:6px}
+.img-drop:hover{border-color:#f5a623}
+.img-drop.has-img{border-color:#2ecc71;padding:6px}
+.img-prev{width:100%;max-height:130px;object-fit:cover;border-radius:7px;display:none}
+.img-prev.show{display:block}
+.img-ph{color:#5a6275;font-size:.78rem;line-height:1.8}
+.img-ph span{font-size:1.5rem;display:block;margin-bottom:3px}
+.img-clr{margin-top:6px;background:rgba(231,76,60,.1);color:#e74c3c;border:1px solid rgba(231,76,60,.2);
+  padding:4px 11px;border-radius:6px;font-size:.7rem;cursor:pointer;display:none;font-family:'Lato',sans-serif}
+.img-clr.show{display:inline-block}
+.form-acts{display:flex;gap:8px;margin-top:18px}
+.f-save{flex:2;padding:10px;background:#f5a623;border:none;border-radius:8px;color:#000;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'Lato',sans-serif}
+.f-save:hover{background:#f0b940}
+.f-save:disabled{background:#5a3a10;color:#888;cursor:not-allowed}
+.f-reset{flex:1;padding:10px;background:#252a38;border:none;border-radius:8px;color:#5a6275;font-size:.86rem;cursor:pointer;font-family:'Lato',sans-serif}
+/* sound + pin settings */
+.set-section{margin-top:22px;border-top:1px solid #252a38;padding-top:16px}
+.set-title{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#f5a623;letter-spacing:2px;text-transform:uppercase;margin-bottom:11px}
+.set-card{background:#0f1117;border:1px solid #252a38;border-radius:10px;padding:12px;margin-bottom:8px}
+.set-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.set-name{font-size:.8rem;font-weight:600}
+.set-desc{font-size:.68rem;color:#5a6275;margin-top:2px}
+.sstat{font-size:.65rem;padding:2px 8px;border-radius:99px;font-weight:700}
+.sstat.custom{background:rgba(46,204,113,.15);color:#2ecc71;border:1px solid rgba(46,204,113,.3)}
+.sstat.default{background:rgba(90,98,117,.2);color:#5a6275;border:1px solid #252a38}
+.s-acts{display:flex;gap:6px}
+.s-up{flex:1;background:rgba(52,152,219,.15);color:#3498db;border:1px solid rgba(52,152,219,.3);
+  padding:6px 11px;border-radius:7px;font-size:.75rem;font-weight:600;cursor:pointer;text-align:center;font-family:'Lato',sans-serif}
+.s-up:hover{background:#3498db;color:#fff}
+.s-test{background:rgba(245,166,35,.15);color:#f5a623;border:1px solid rgba(245,166,35,.3);
+  padding:6px 11px;border-radius:7px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'Lato',sans-serif}
+.s-test:hover{background:#f5a623;color:#000}
+.s-del{background:rgba(231,76,60,.1);color:#e74c3c;border:1px solid rgba(231,76,60,.2);
+  padding:6px 9px;border-radius:7px;font-size:.75rem;cursor:pointer;font-family:'Lato',sans-serif}
+.s-del:hover{background:#e74c3c;color:#fff}
+.sfname{font-size:.66rem;color:#5a6275;margin-top:5px;font-family:'IBM Plex Mono',monospace}
+.pin-inp-row{display:flex;gap:8px;margin-top:4px}
+.pin-text-inp{flex:1;background:#0f1117;border:1px solid #252a38;color:#e8eaf0;border-radius:7px;
+  padding:8px 11px;font-family:'IBM Plex Mono',monospace;font-size:.95rem;outline:none}
+.pin-save-btn{background:rgba(245,166,35,.15);color:#f5a623;border:1px solid rgba(245,166,35,.3);
+  padding:8px 13px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;flex-shrink:0;font-family:'Lato',sans-serif}
+.pin-save-btn:hover{background:#f5a623;color:#000}
+/* del modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.dialog{background:#181b24;border:1px solid #252a38;border-radius:13px;padding:24px;width:290px;text-align:center}
+.dlg-title{font-family:'IBM Plex Mono',monospace;font-size:.92rem;color:#e8eaf0;margin-bottom:7px}
+.dlg-sub{font-size:.8rem;color:#5a6275;margin-bottom:20px;line-height:1.6}
+.dlg-acts{display:flex;gap:9px}
+.dlg-yes{flex:1;padding:10px;background:#e74c3c;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:'Lato',sans-serif}
+.dlg-no{flex:1;padding:10px;background:#252a38;border:none;border-radius:8px;color:#5a6275;cursor:pointer;font-family:'Lato',sans-serif}
+.a-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#2ecc71;color:#000;padding:10px 24px;border-radius:99px;font-weight:700;
+  font-size:.86rem;opacity:0;transition:all .35s;z-index:999;pointer-events:none}
+.a-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty-lbl{text-align:center;padding:32px;color:#5a6275;font-size:.8rem}
+</style>
+</head>
+<body>
+
+<!-- ════════════ HOME ════════════ -->
+<div id="pg-home" class="page active">
+  <div class="home-icon">🍔</div>
+  <div class="home-logo">Fleggfoods</div>
+  <div class="home-tagline">Burgers · Steaks · Good Vibes</div>
+  <div class="home-btns">
+    <button class="hbtn hbtn-order" id="btn-goto-order">🛒 สั่งอาหาร</button>
+    <button class="hbtn hbtn-kitchen" id="btn-goto-kitchen">🍳 Kitchen Dashboard</button>
+    <button class="hbtn hbtn-admin" id="btn-goto-admin">⚙ Admin Panel</button>
+  </div>
+</div>
+
+<!-- ════════════ PIN ════════════ -->
+<div id="pg-pin" class="page">
+  <div class="pin-icon" id="pin-icon">🍳</div>
+  <div class="pin-title" id="pin-title">Kitchen</div>
+  <div class="pin-sub">ใส่รหัส 4 หลัก</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-grid">
+    <button class="pbtn" onclick="PIN.key('1')">1</button>
+    <button class="pbtn" onclick="PIN.key('2')">2</button>
+    <button class="pbtn" onclick="PIN.key('3')">3</button>
+    <button class="pbtn" onclick="PIN.key('4')">4</button>
+    <button class="pbtn" onclick="PIN.key('5')">5</button>
+    <button class="pbtn" onclick="PIN.key('6')">6</button>
+    <button class="pbtn" onclick="PIN.key('7')">7</button>
+    <button class="pbtn" onclick="PIN.key('8')">8</button>
+    <button class="pbtn" onclick="PIN.key('9')">9</button>
+    <div></div>
+    <button class="pbtn" onclick="PIN.key('0')">0</button>
+    <button class="pbtn del" onclick="PIN.del()">⌫</button>
+  </div>
+  <div class="pin-err-msg" id="pin-err"></div>
+  <button class="pin-back" onclick="NAV.go('home')">← กลับหน้าหลัก</button>
+</div>
+
+<!-- ════════════ ORDER ════════════ -->
+<div id="pg-order" class="page">
+  <div class="app-bar">
+    <div class="app-bar-logo">Fleggfoods</div>
+    <div class="bar-right">
+      <div class="cart-pill" id="cart-pill">🛒 0 · ฿0</div>
+      <button class="back-btn" onclick="NAV.go('home')">← หน้าหลัก</button>
+    </div>
+  </div>
+
+  <!-- main order view -->
+  <div id="order-main">
+    <div class="name-bar">
+      <div class="name-lbl">🪑 โต๊ะ / ชื่อของคุณ</div>
+      <div class="name-wrap">
+        <span class="name-ico">👤</span>
+        <input class="name-inp" id="table-inp" type="text" placeholder="กรอกชื่อหรือหมายเลขโต๊ะก่อนสั่ง..." autocomplete="off">
+      </div>
+    </div>
+    <div class="fries-bar">🍟 ALL BURGERS AND STEAKS COME WITH FRIES</div>
+    <div class="tabs">
+      <div class="tab-btn on" onclick="ORDER.tab('burger',this)">🍔 Burgers</div>
+      <div class="tab-btn" onclick="ORDER.tab('steak',this)">🥩 Steak</div>
+      <div class="tab-btn" onclick="ORDER.tab('drinks',this)">🥤 Drinks</div>
+    </div>
+    <div id="grid-burger" class="mgrid"></div>
+    <div id="grid-steak" class="mgrid off"></div>
+    <div id="grid-drinks" class="mgrid off"></div>
+    <div class="cart-box" id="cart-box" style="display:none">
+      <div class="cart-ttl">📋 รายการสั่ง</div>
+      <div id="cart-rows"></div>
+      <div class="cart-total-row">
+        <span class="cart-total-lbl">ยอดรวม</span>
+        <span class="cart-total-amt" id="cart-total">฿0</span>
+      </div>
+      <textarea class="note-inp" id="note-inp" rows="2" placeholder="📝 โน้ตพิเศษ เช่น No onions..."></textarea>
+      <button class="send-btn" id="send-btn" onclick="ORDER.place()">🚀 ส่งออเดอร์ไปครัว</button>
+    </div>
+  </div>
+
+  <!-- waiting -->
+  <div class="wait-box" id="wait-box">
+    <div class="wait-spin"></div>
+    <div class="wait-title">Order sent to kitchen!</div>
+    <div class="wait-id" id="wait-id">#0001</div>
+    <div class="wait-sub" id="wait-table"></div>
+    <div class="steps">
+      <div class="step"><div class="step-c on" id="sc1">📋</div><div class="step-l on" id="sl1">รับออเดอร์</div></div>
+      <div class="step-line" id="sline1"></div>
+      <div class="step"><div class="step-c" id="sc2">🔥</div><div class="step-l" id="sl2">กำลังทำ</div></div>
+      <div class="step-line" id="sline2"></div>
+      <div class="step"><div class="step-c" id="sc3">✅</div><div class="step-l" id="sl3">พร้อมเสิร์ฟ</div></div>
+    </div>
+    <div class="wait-sub">กรุณารอสักครู่ ครัวกำลังเตรียมอาหาร 👨‍🍳</div>
+    <div class="sumbox" id="wait-sum"></div>
+  </div>
+
+  <!-- ready -->
+  <div class="ready-box" id="ready-box">
+    <div class="ready-ico">🍔</div>
+    <div class="ready-title">อาหารพร้อมแล้ว!</div>
+    <div class="ready-sub">Order <span class="ready-id" id="ready-id">#0001</span><br><span id="ready-table"></span><br>Please collect your food 🙏</div>
+    <div class="sumbox" id="ready-sum"></div>
+    <button class="again-btn" onclick="ORDER.reset()">🍔 สั่งอาหารอีกรอบ</button>
+  </div>
+</div>
+
+<!-- ════════════ KITCHEN ════════════ -->
+<div id="pg-kitchen" class="page">
+  <div class="k-bar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="k-logo">Fleggfoods<span style="font-size:.58rem;color:#5a6275;letter-spacing:1px"> // KITCHEN</span></div>
+      <div class="live-wrap"><div class="ldot" id="ldot"></div><span class="live-lbl" id="llbl">CONNECTING</span></div>
+    </div>
+    <div class="k-right">
+      <button class="audio-btn" id="audio-btn" onclick="KITCHEN.enableAudio()">🔇 เปิดเสียง</button>
+      <div class="k-clock" id="k-clock">00:00:00</div>
+      <button class="back-btn" onclick="NAV.go('home')">← หน้าหลัก</button>
+    </div>
+  </div>
+  <div class="k-stats">
+    <div class="k-stat"><div class="k-stat-n" style="color:#f5a623" id="kst-new">0</div><div class="k-stat-l">รอดำเนินการ</div></div>
+    <div class="k-stat"><div class="k-stat-n" style="color:#3498db" id="kst-cooking">0</div><div class="k-stat-l">กำลังทำ</div></div>
+    <div class="k-stat"><div class="k-stat-n" style="color:#2ecc71" id="kst-done">0</div><div class="k-stat-l">เสร็จแล้ว</div></div>
+    <div class="k-stat"><div class="k-stat-n" style="color:#e74c3c" id="kst-urg">0</div><div class="k-stat-l">รอนาน &gt;10 นาที</div></div>
+  </div>
+  <div class="board">
+    <div class="kcol"><div class="kcol-hd"><div class="kcol-title ct-new">⏳ รอดำเนินการ</div><div class="kcol-cnt" id="kc-new">0</div></div><div class="kcol-body" id="kb-new"></div></div>
+    <div class="kcol"><div class="kcol-hd"><div class="kcol-title ct-cooking">🔥 กำลังทำ</div><div class="kcol-cnt" id="kc-cooking">0</div></div><div class="kcol-body" id="kb-cooking"></div></div>
+    <div class="kcol"><div class="kcol-hd"><div class="kcol-title ct-done">✅ เสร็จแล้ว</div><div class="kcol-cnt" id="kc-done">0</div></div><div class="kcol-body" id="kb-done"></div></div>
+  </div>
+  <button class="k-clear-btn" onclick="KITCHEN.clearDone()">🗑 ล้างรายการเสร็จแล้ว</button>
+  <div class="k-toast" id="k-toast"></div>
+</div>
+
+<!-- ════════════ ADMIN ════════════ -->
+<div id="pg-admin" class="page">
+  <div class="a-bar">
+    <div class="a-logo">Fleggfoods</div>
+    <div style="display:flex;align-items:center;gap:9px">
+      <span class="sync-lbl" id="sync-lbl">🌐 Firebase</span>
+      <div class="a-badge">⚙ ADMIN</div>
+      <button class="back-btn" onclick="NAV.go('home')">← หน้าหลัก</button>
+    </div>
+  </div>
+  <div class="a-layout">
+    <div class="a-left">
+      <div class="a-stats" id="a-stats"></div>
+      <div class="ctabs">
+        <div class="ctab on" onclick="ADMIN.cat('burger',this)">🍔 Burgers</div>
+        <div class="ctab" onclick="ADMIN.cat('steak',this)">🥩 Steak</div>
+        <div class="ctab" onclick="ADMIN.cat('drinks',this)">🥤 Drinks</div>
+      </div>
+      <div class="a-sec-hd">
+        <div class="a-sec-title" id="a-list-title">Burgers</div>
+        <button class="a-add-btn" onclick="ADMIN.openAdd()">＋ เพิ่มเมนู</button>
+      </div>
+      <div id="menu-list"></div>
+
+      <!-- Sound -->
+      <div class="set-section">
+        <div class="set-title">🔔 เสียงแจ้งเตือน</div>
+        <div class="set-card">
+          <div class="set-card-hd"><div><div class="set-name">🍳 ออเดอร์ใหม่ (ครัว)</div><div class="set-desc">เล่นเมื่อมีออเดอร์เข้า</div></div><div class="sstat default" id="ss-no">ค่าเริ่มต้น</div></div>
+          <div class="sfname" id="sf-no">เสียง beep อัตโนมัติ</div>
+          <div class="s-acts" style="margin-top:9px">
+            <label class="s-up">📁 อัปโหลด<input type="file" accept="audio/*" style="display:none" onchange="ADMIN.uploadSound('neworder',this)"></label>
+            <button class="s-test" onclick="ADMIN.testSound('neworder')">▶ ทดสอบ</button>
+            <button class="s-del" id="sd-no" onclick="ADMIN.delSound('neworder')" style="display:none">🗑</button>
+          </div>
+        </div>
+        <div class="set-card">
+          <div class="set-card-hd"><div><div class="set-name">🍔 อาหารพร้อม (ลูกค้า)</div><div class="set-desc">เล่นเมื่ออาหารพร้อม</div></div><div class="sstat default" id="ss-re">ค่าเริ่มต้น</div></div>
+          <div class="sfname" id="sf-re">เสียงเมโลดี้อัตโนมัติ</div>
+          <div class="s-acts" style="margin-top:9px">
+            <label class="s-up">📁 อัปโหลด<input type="file" accept="audio/*" style="display:none" onchange="ADMIN.uploadSound('ready',this)"></label>
+            <button class="s-test" onclick="ADMIN.testSound('ready')">▶ ทดสอบ</button>
+            <button class="s-del" id="sd-re" onclick="ADMIN.delSound('ready')" style="display:none">🗑</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIN change -->
+      <div class="set-section">
+        <div class="set-title">🔐 เปลี่ยนรหัสผ่าน</div>
+        <div class="set-card">
+          <div class="set-name" style="margin-bottom:8px">Kitchen PIN <span style="color:#5a6275;font-size:.7rem">(ค่าเริ่มต้น: 1234)</span></div>
+          <div class="pin-inp-row">
+            <input class="pin-text-inp" id="new-kpin" type="password" maxlength="4" placeholder="PIN ใหม่ 4 หลัก">
+            <button class="pin-save-btn" onclick="ADMIN.savePin('kitchen')">บันทึก</button>
+          </div>
+        </div>
+        <div class="set-card">
+          <div class="set-name" style="margin-bottom:8px">Admin PIN <span style="color:#5a6275;font-size:.7rem">(ค่าเริ่มต้น: 0000)</span></div>
+          <div class="pin-inp-row">
+            <input class="pin-text-inp" id="new-apin" type="password" maxlength="4" placeholder="PIN ใหม่ 4 หลัก">
+            <button class="pin-save-btn" onclick="ADMIN.savePin('admin')">บันทึก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="a-right" id="admin-form">
+      <div class="form-ttl" id="form-title">// เพิ่มเมนูใหม่</div>
+      <div class="fld"><label>ชื่อเมนู</label><input id="f-name" type="text" placeholder="เช่น England Burger"></div>
+      <div class="fld"><label>รายละเอียด</label><textarea id="f-desc" rows="2" placeholder="เช่น Signature sauce, cheddar..."></textarea></div>
+      <div class="fld"><label>ราคา (บาท)</label><input id="f-price" type="number" placeholder="250" min="0"></div>
+      <div class="fld"><label>หมวดหมู่</label>
+        <select id="f-cat"><option value="burger">🍔 Burgers</option><option value="steak">🥩 Steak</option><option value="drinks">🥤 Drinks</option></select>
+      </div>
+      <div class="fld"><label>Tag (ไม่บังคับ)</label><input id="f-tag" type="text" placeholder="Beef, Pork, +Add On..."></div>
+      <div class="fld">
+        <label>รูปภาพ (ไม่บังคับ)</label>
+        <div class="img-drop" id="img-drop" onclick="document.getElementById('f-img').click()">
+          <img class="img-prev" id="img-prev" src="" alt="">
+          <div class="img-ph" id="img-ph"><span>🖼</span>คลิกเพื่อเลือกรูป</div>
+        </div>
+        <input type="file" id="f-img" accept="image/*" style="display:none" onchange="ADMIN.imgUpload(event)">
+        <button class="img-clr" id="img-clr" onclick="ADMIN.imgClear()">✕ ลบรูป</button>
+      </div>
+      <div class="fld"><label>อีโมจิ (ถ้าไม่มีรูป)</label><div class="emo-grid" id="emo-grid"></div></div>
+      <div class="form-acts">
+        <button class="f-reset" onclick="ADMIN.resetForm()">ล้างฟอร์ม</button>
+        <button class="f-save" id="f-save" onclick="ADMIN.save()">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="del-overlay">
+    <div class="dialog">
+      <div class="dlg-title">ลบเมนูนี้?</div>
+      <div class="dlg-sub" id="del-name">—</div>
+      <div class="dlg-acts">
+        <button class="dlg-no" onclick="ADMIN.closeDel()">ยกเลิก</button>
+        <button class="dlg-yes" onclick="ADMIN.confirmDel()">🗑 ลบเลย</button>
+      </div>
+    </div>
+  </div>
+  <div class="a-toast" id="a-toast"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════
+   CONFIG
+═══════════════════════════════════ */
+const DB = 'https://fleggfoods-b75d6-c7e3d-default-rtdb.asia-southeast1.firebasedatabase.app';
+const EMOJIS = ['🍔','🥓','🍗','🍄','🏆','🌶️','🍟','🧅','🥗','🥤','🥛','🍊','🧀','🥩','🍞','🌮','🍕','🍋','🧃','☕'];
+const DEFAULT_MENU = {
+  burger:[
+    {id:1,name:'England',desc:'Our signature burger sauce, caramalised onions, cheddar cheese and pickles',price:250,emoji:'🍔',tag:'Beef',available:true},
+    {id:2,name:'USA',desc:'Classic cheeseburger with our homemade pickles, ketchup, mustard, onions',price:250,emoji:'🍔',tag:'Beef',available:true},
+    {id:3,name:'Australia',desc:'BBQ sauce, red onions, pickles, cheese',price:200,emoji:'🍔',tag:'Pork',available:true},
+    {id:4,name:'Thailand',desc:'Cheeseburger with our homemade pickled Thai chillies and jim jeaw sauce',price:200,emoji:'🌶️',tag:'Pork',available:true},
+    {id:5,name:'Breakfast Sausage Bap',desc:'Pork patty, cheese and a hashbrown with your choice of sauce',price:200,emoji:'🥓',tag:'',available:true},
+    {id:6,name:'Double Up',desc:'Get an extra patty in your burger for a really filling treat',price:50,emoji:'🍔',tag:'+Add On',available:true}
+  ],
+  steak:[
+    {id:10,name:'Beef Ribeye',desc:"A mouthwatering rib eye steak that's perfectly marbled and bursting with rich flavor",price:250,emoji:'🥩',tag:'',available:true},
+    {id:11,name:'Beef Sirloin',desc:'Lean, meaty sirloin for those that like a bit of bite',price:250,emoji:'🥩',tag:'',available:true},
+    {id:12,name:'Pork Loin',desc:'A succulent and tender cut, offering a lean and flavorful mouthful',price:200,emoji:'🥩',tag:'',available:true}
+  ],
+  drinks:[
+    {id:20,name:'โคล่า',desc:'เย็นสดชื่น',price:39,emoji:'🥤',tag:'',available:true},
+    {id:21,name:'น้ำเปล่า',desc:'น้ำดื่มสะอาด',price:20,emoji:'💧',tag:'',available:true},
+    {id:22,name:'น้ำส้ม',desc:'คั้นสดทุกวัน',price:49,emoji:'🍊',tag:'',available:true}
+  ]
+};
+
+/* ═══════════════════════════════════
+   HELPERS
+═══════════════════════════════════ */
+function G(id){return document.getElementById(id)}
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  G('pg-'+name).classList.add('active');
+}
+async function fbGet(p){try{const r=await fetch(DB+p+'.json');return await r.json();}catch(e){return null;}}
+async function fbSet(p,d){try{await fetch(DB+p+'.json',{method:'PUT',body:JSON.stringify(d)});return true;}catch(e){return false;}}
+async function fbPatch(p,d){try{await fetch(DB+p+'.json',{method:'PATCH',body:JSON.stringify(d)});}catch(e){}}
+async function fbDel(p){try{await fetch(DB+p+'.json',{method:'DELETE'});}catch(e){}}
+function getPin(role){return localStorage.getItem('flegg_pin_'+role)||(role==='kitchen'?'1234':'0000');}
+
+/* ═══════════════════════════════════
+   SOUND
+═══════════════════════════════════ */
+let _actx=null;
+function actx(){if(!_actx)_actx=new(window.AudioContext||window.webkitAudioContext)();return _actx;}
+function beep(){try{const c=actx();c.resume();[[880,0,.12],[660,.15,.12],[880,.3,.18]].forEach(([f,s,d])=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0,c.currentTime+s);g.gain.linearRampToValueAtTime(.5,c.currentTime+s+.01);g.gain.linearRampToValueAtTime(0,c.currentTime+s+d);o.start(c.currentTime+s);o.stop(c.currentTime+s+d+.05);});}catch(e){}}
+function melody(){try{const c=actx();c.resume();[[523,0,.15],[659,.18,.15],[784,.36,.15],[1047,.54,.3]].forEach(([f,s,d])=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0,c.currentTime+s);g.gain.linearRampToValueAtTime(.6,c.currentTime+s+.01);g.gain.linearRampToValueAtTime(0,c.currentTime+s+d);o.start(c.currentTime+s);o.stop(c.currentTime+s+d+.05);});}catch(e){}}
+function playSound(key,fallback){const d=localStorage.getItem('flegg_sound_'+key);if(d){try{const a=new Audio(d);a.volume=.85;a.play().catch(fallback);}catch(e){fallback();}}else fallback();}
+document.addEventListener('click',()=>{try{actx().resume();}catch(e){}},{once:true});
+
+/* ═══════════════════════════════════
+   NAV
+═══════════════════════════════════ */
+const NAV = {
+  go(page){
+    if(page==='kitchen'||page==='admin'){PIN.open(page);}
+    else if(page==='order'){showPage('order');ORDER.init();}
+    else showPage(page);
+  }
+};
+G('btn-goto-order').onclick=()=>NAV.go('order');
+G('btn-goto-kitchen').onclick=()=>NAV.go('kitchen');
+G('btn-goto-admin').onclick=()=>NAV.go('admin');
+
+/* ═══════════════════════════════════
+   PIN
+═══════════════════════════════════ */
+const PIN = {
+  target:'',val:'',
+  open(role){
+    this.target=role; this.val=''; this.render();
+    G('pin-icon').textContent=role==='kitchen'?'🍳':'⚙';
+    G('pin-title').textContent=role==='kitchen'?'Kitchen Dashboard':'Admin Panel';
+    G('pin-err').textContent='';
+    showPage('pin');
+  },
+  key(k){
+    if(this.val.length>=4)return;
+    this.val+=k; this.render();
+    if(this.val.length===4)setTimeout(()=>this.check(),120);
+  },
+  del(){this.val=this.val.slice(0,-1);this.render();},
+  render(){for(let i=0;i<4;i++){const d=G('pd'+i);d.className='pin-dot'+(i<this.val.length?' filled':'');}},
+  error(){
+    for(let i=0;i<4;i++)G('pd'+i).className='pin-dot error';
+    G('pin-err').textContent='รหัสไม่ถูกต้อง ลองใหม่';
+    setTimeout(()=>{this.val='';this.render();G('pin-err').textContent='';},800);
+  },
+  check(){
+    if(this.val===getPin(this.target)){
+      showPage(this.target);
+      if(this.target==='kitchen')KITCHEN.init();
+      if(this.target==='admin')ADMIN.init();
+    }else this.error();
+  }
+};
+
+/* ═══════════════════════════════════
+   ORDER
+═══════════════════════════════════ */
+const ORDER = {
+  cart:{}, menu:null, orderId:null, sse:null,
+  init(){
+    this.cart={}; this.menu=DEFAULT_MENU;
+    this.render(); this.updateCart();
+    G('order-main').style.display='block';
+    G('wait-box').style.display='none';
+    G('ready-box').style.display='none';
+    fbGet('/menu').then(m=>{if(m&&Object.keys(m).length>0){this.menu=m;this.render();}});
+  },
+  find(id){for(const arr of Object.values(this.menu)){const f=arr.find(i=>String(i.id)===String(id));if(f)return f;}return null;},
+  tab(cat,el){
+    document.querySelectorAll('#pg-order .tab-btn').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+    ['burger','steak','drinks'].forEach(c=>G('grid-'+c).classList.toggle('off',c!==cat));
+  },
+  render(){
+    ['burger','steak','drinks'].forEach(cat=>{
+      const el=G('grid-'+cat);if(!el)return;
+      const items=(this.menu[cat]||[]);
+      if(!items.length){el.innerHTML='<p style="padding:20px;color:#8a6040">ไม่มีเมนูในหมวดนี้</p>';return;}
+      el.innerHTML=items.map(item=>{
+        const a=item.available!==false,qty=(this.cart[item.id]||{}).qty||0;
+        const imgH=item.image?`<img src="${item.image}" alt="${item.name}" style="width:100%;height:140px;object-fit:cover;border-radius:9px;">`:`<div class="card-emo">${item.emoji||'🍔'}</div>`;
+        const tagH=item.tag?`<div class="card-tag">${item.tag}</div>`:'';
+        let ctrl='';
+        if(a)ctrl=qty===0?`<button class="add-btn" onclick="ORDER.add('${item.id}')">+ Add</button>`:`<div class="qty-ctrl"><button class="qty-btn" onclick="ORDER.remove('${item.id}')">−</button><span class="qty-n">${qty}</span><button class="qty-btn" onclick="ORDER.add('${item.id}')">+</button></div>`;
+        return `<div class="mcard${a?'':' sold'}">${imgH}${tagH}<div class="card-name">${item.name}</div><div class="card-desc">${item.desc}</div>${!a?'<div class="sold-lbl">⛔ Sold out</div>':''}<div class="card-foot"><div class="card-price">฿${item.price}</div>${ctrl}</div></div>`;
+      }).join('');
+    });
+  },
+  add(id){const item=this.find(id);if(!item)return;if(!this.cart[id])this.cart[id]={...item,qty:0};this.cart[id].qty++;this.updateCart();this.render();},
+  remove(id){if(!this.cart[id])return;this.cart[id].qty--;if(this.cart[id].qty<=0)delete this.cart[id];this.updateCart();this.render();},
+  updateCart(){
+    const items=Object.values(this.cart);
+    const qty=items.reduce((s,i)=>s+i.qty,0),total=items.reduce((s,i)=>s+i.price*i.qty,0);
+    G('cart-pill').textContent=`🛒 ${qty} · ฿${total.toLocaleString()}`;
+    const box=G('cart-box');
+    if(!items.length){box.style.display='none';return;}
+    box.style.display='block';
+    G('cart-rows').innerHTML=items.map(i=>`<div class="cart-row"><span style="font-size:1.3rem">${i.emoji||'🍔'}</span><span class="cart-name">${i.name}</span><span class="cart-sub">x${i.qty}</span><span class="cart-price">฿${(i.price*i.qty).toLocaleString()}</span></div>`).join('');
+    G('cart-total').textContent=`฿${total.toLocaleString()}`;
+  },
+  sumHtml(items,note){
+    return items.map(i=>`<div class="sumrow"><span>${i.emoji||'🍔'}</span><span style="flex:1">${i.name}</span><span style="color:#8a6040">x${i.qty}</span><span style="color:#f0a830">฿${(i.price*i.qty).toLocaleString()}</span></div>`).join('')+(note?`<div style="font-size:.8rem;color:#8a6040;margin-top:8px;padding-top:8px;border-top:1px solid #3a1a00">📝 ${note}</div>`:'');
+  },
+  async place(){
+    const tEl=G('table-inp'),table=tEl.value.trim(),note=G('note-inp').value.trim(),items=Object.values(this.cart);
+    if(!table){tEl.classList.add('err');tEl.focus();setTimeout(()=>tEl.classList.remove('err'),2500);return;}
+    if(!items.length){alert('กรุณาเลือกเมนูอย่างน้อย 1 รายการ');return;}
+    const btn=G('send-btn');btn.disabled=true;btn.textContent='⏳ กำลังส่ง...';
+    const oid=Date.now();this.orderId=oid;
+    await fbSet(`/orders/${oid}`,{id:oid,table,note,items:items.map(i=>({id:i.id,name:i.name,emoji:i.emoji||'🍔',price:i.price,qty:i.qty})),status:'new',createdAt:oid});
+    G('wait-id').textContent='#'+String(oid).slice(-4);
+    G('wait-table').textContent=`🪑 ${table}`;
+    G('wait-sum').innerHTML=this.sumHtml(items,note);
+    G('order-main').style.display='none';G('wait-box').style.display='block';
+    btn.disabled=false;btn.textContent='🚀 ส่งออเดอร์ไปครัว';
+    this.listen(oid,items,note,table);
+  },
+  setStep(n){for(let i=1;i<=3;i++){G('sc'+i).className='step-c'+(i<n?' done':i===n?' on':'');G('sl'+i).className='step-l'+(i<n?' done':i===n?' on':'');if(i<3)G('sline'+i).className='step-line'+(i<n?' done':'');}},
+  listen(oid,items,note,table){
+    if(this.sse){try{this.sse.close();}catch(e){}}
+    try{
+      this.sse=new EventSource(`${DB}/orders/${oid}.json`);
+      this.sse.addEventListener('put',e=>{
+        try{const d=JSON.parse(e.data),o=d.data||d;if(!o||!o.status)return;
+          if(o.status==='cooking')this.setStep(2);
+          else if(o.status==='done'){this.setStep(3);this.sse.close();setTimeout(()=>this.showReady(oid,items,note,table),800);}
+        }catch(ex){}
+      });
+      this.sse.onerror=()=>{this.sse.close();this.poll(oid,items,note,table);};
+    }catch(e){this.poll(oid,items,note,table);}
+  },
+  poll(oid,items,note,table){
+    const iv=setInterval(async()=>{const o=await fbGet(`/orders/${oid}`);if(!o)return;if(o.status==='cooking')this.setStep(2);else if(o.status==='done'){clearInterval(iv);this.setStep(3);setTimeout(()=>this.showReady(oid,items,note,table),800);}},3000);
+  },
+  showReady(oid,items,note,table){
+    G('ready-id').textContent='#'+String(oid).slice(-4);G('ready-table').textContent=`🪑 ${table}`;G('ready-sum').innerHTML=this.sumHtml(items,note);
+    G('wait-box').style.display='none';G('ready-box').style.display='block';
+    document.title='🍔 อาหารพร้อมแล้ว!';
+    playSound('ready',melody);setTimeout(()=>playSound('ready',melody),2500);setTimeout(()=>playSound('ready',melody),5000);
+  },
+  reset(){
+    if(this.sse){try{this.sse.close();}catch(e){}}
+    this.sse=null;this.orderId=null;this.cart={};
+    G('order-main').style.display='block';G('wait-box').style.display='none';G('ready-box').style.display='none';
+    G('cart-box').style.display='none';G('cart-pill').textContent='🛒 0 · ฿0';
+    G('table-inp').value='';G('note-inp').value='';document.title='Fleggfoods';this.setStep(1);this.render();
+  }
+};
+
+/* ═══════════════════════════════════
+   KITCHEN
+═══════════════════════════════════ */
+const KITCHEN = {
+  orders:{}, audioOn:false, sse:null, clockIv:null,
+  init(){
+    if(this.clockIv)clearInterval(this.clockIv);
+    this.clockIv=setInterval(()=>this.tick(),1000);this.tick();
+    this.startSSE();
+  },
+  tick(){const n=new Date();G('k-clock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');},
+  enableAudio(){
+    try{actx().resume();this.audioOn=true;playSound('neworder',beep);}catch(e){}
+    const b=G('audio-btn');b.textContent='🔔 เสียงเปิดแล้ว';b.className='audio-btn on';b.onclick=null;
+  },
+  toast(msg,color='#2ecc71'){const t=G('k-toast');t.textContent=msg;t.style.background=color;t.style.color=color==='#e74c3c'?'#fff':'#000';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);},
+  elapsed(ts){const d=Date.now()-ts;return{m:Math.floor(d/60000),s:String(Math.floor((d%60000)/1000)).padStart(2,'0')};},
+  render(){
+    const all=Object.values(this.orders);
+    const cols={new:[],cooking:[],done:[]};all.forEach(o=>{if(cols[o.status])cols[o.status].push(o);});
+    const urg=all.filter(o=>o.status!=='done'&&this.elapsed(o.createdAt).m>=10).length;
+    G('kst-new').textContent=cols.new.length;G('kst-cooking').textContent=cols.cooking.length;
+    G('kst-done').textContent=cols.done.length;G('kst-urg').textContent=urg;
+    G('kc-new').textContent=cols.new.length;G('kc-cooking').textContent=cols.cooking.length;G('kc-done').textContent=cols.done.length;
+    this.renderCol('kb-new',cols.new,'new');this.renderCol('kb-cooking',cols.cooking,'cooking');this.renderCol('kb-done',cols.done,'done');
+  },
+  renderCol(elId,orders,status){
+    const el=G(elId);
+    if(!orders.length){const icons={new:'🍔',cooking:'👨‍🍳',done:'🎉'};el.innerHTML=`<div class="kempty"><div style="font-size:2rem;opacity:.4;margin-bottom:6px">${icons[status]}</div>ยังไม่มีออเดอร์</div>`;return;}
+    el.innerHTML=orders.sort((a,b)=>a.createdAt-b.createdAt).map(o=>{
+      const el2=this.elapsed(o.createdAt),urg=el2.m>=10&&status!=='done',tot=o.items.reduce((s,i)=>s+i.price*i.qty,0);
+      const id='#'+String(o.id).slice(-4);
+      const itemsH=o.items.map(i=>`<div class="kitem"><div class="kitem-emo">${i.emoji}</div><div style="flex:1"><div class="kitem-name">${i.name}</div>${o.note?`<div class="kitem-note">📝 ${o.note}</div>`:''}</div><div class="kitem-qty">x${i.qty}</div></div>`).join('');
+      let acts='';
+      if(status==='new')acts=`<button class="kbtn kbtn-start" onclick="KITCHEN.move(${o.id},'cooking')">🔥 เริ่มทำ</button><button class="kbtn kbtn-cancel" onclick="KITCHEN.move(${o.id},'remove')">✕</button>`;
+      else if(status==='cooking')acts=`<button class="kbtn kbtn-done" onclick="KITCHEN.move(${o.id},'done')">✅ เสร็จ — แจ้งลูกค้า</button><button class="kbtn kbtn-cancel" onclick="KITCHEN.move(${o.id},'remove')">✕</button>`;
+      else acts=`<button class="kbtn kbtn-clear" onclick="KITCHEN.move(${o.id},'remove')">🗑 ลบออก</button>`;
+      return `<div class="kcard${urg?' urg':''}"><div class="kcard-top"><div><div class="kcard-id">${id}</div><div class="kcard-table">🪑 ${o.table}</div></div><div style="text-align:right"><div class="ktimer${urg?' late':''}">${el2.m}:${el2.s}</div>${urg?'<div class="urg-tag">⚠ รอนาน!</div>':''}</div></div><div class="kitems">${itemsH}</div><div class="kactions">${acts}</div><div class="ktotal">Total <span>฿${tot.toLocaleString()}</span></div></div>`;
+    }).join('');
+  },
+  async move(id,status){
+    if(status==='remove'){await fbDel(`/orders/${id}`);delete this.orders[id];}
+    else{await fbPatch(`/orders/${id}`,{status});if(this.orders[id])this.orders[id].status=status;if(status==='done')this.toast(`✅ แจ้งลูกค้า #${String(id).slice(-4)} แล้ว!`);}
+    this.render();
+  },
+  async clearDone(){for(const o of Object.values(this.orders).filter(o=>o.status==='done')){await fbDel(`/orders/${o.id}`);delete this.orders[o.id];}this.render();},
+  setLive(on){G('ldot').className='ldot'+(on?'':' off');const l=G('llbl');l.textContent=on?'LIVE':'RECONNECTING...';l.className='live-lbl'+(on?'':' off');},
+  startSSE(){
+    if(this.sse){try{this.sse.close();}catch(e){}}
+    try{
+      this.sse=new EventSource(`${DB}/orders.json`);
+      this.sse.addEventListener('put',e=>{
+        try{
+          const {path,data}=JSON.parse(e.data);const prev=new Set(Object.keys(this.orders));
+          if(path==='/'){this.orders=data||{};if(prev.size>0)Object.keys(this.orders).forEach(id=>{if(!prev.has(id)&&this.audioOn)playSound('neworder',beep);});}
+          else{const id=path.replace('/','');if(data===null)delete this.orders[id];else{const isNew=!this.orders[id];this.orders[id]=data;if(isNew&&this.audioOn)playSound('neworder',beep);}}
+          this.render();this.setLive(true);
+        }catch(ex){}
+      });
+      this.sse.onerror=()=>{this.setLive(false);this.sse.close();setTimeout(()=>this.startSSE(),5000);};
+    }catch(e){}
+  }
+};
+
+/* ═══════════════════════════════════
+   ADMIN
+═══════════════════════════════════ */
+const ADMIN = {
+  menu:null, curCat:'burger', editId:null, selEmo:'🍔', delId:null, curImg:null,
+  init(){this.buildEmo('🍔');this.initSoundUI();this.loadMenu();},
+  setSyncLbl(msg,color='#2ecc71'){const el=G('sync-lbl');el.textContent=msg;el.style.color=color;},
+  async loadMenu(){
+    this.setSyncLbl('⏳ กำลังโหลด...','#f5a623');
+    const s=await fbGet('/menu');
+    this.menu=(s&&Object.keys(s).length>0)?s:JSON.parse(JSON.stringify(DEFAULT_MENU));
+    this.setSyncLbl('🌐 พร้อม','#2ecc71');this.renderList();this.renderStats();
+  },
+  async saveFB(){this.setSyncLbl('⏳ บันทึก...','#f5a623');const ok=await fbSet('/menu',this.menu);this.setSyncLbl(ok?'✅ บันทึกแล้ว':'❌ ล้มเหลว',ok?'#2ecc71':'#e74c3c');setTimeout(()=>this.setSyncLbl('🌐 พร้อม','#2ecc71'),2000);},
+  toast(msg,color='#2ecc71'){const t=G('a-toast');t.textContent=msg;t.style.background=color;t.style.color=color==='#e74c3c'?'#fff':'#000';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);},
+  cat(c,el){this.curCat=c;document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('on'));el.classList.add('on');const n={burger:'Burgers',steak:'Steak',drinks:'Drinks'};G('a-list-title').textContent=n[c];G('f-cat').value=c;this.renderList();},
+  renderStats(){const all=[...this.menu.burger,...this.menu.steak,...this.menu.drinks],av=all.filter(i=>i.available!==false).length;G('a-stats').innerHTML=`<div class="a-stat"><div class="a-stat-n" style="color:#f5a623">${all.length}</div><div class="a-stat-l">เมนูทั้งหมด</div></div><div class="a-stat"><div class="a-stat-n" style="color:#2ecc71">${av}</div><div class="a-stat-l">พร้อมขาย</div></div><div class="a-stat"><div class="a-stat-n" style="color:#e74c3c">${all.length-av}</div><div class="a-stat-l">ปิดชั่วคราว</div></div>`;},
+  renderList(){
+    const items=(this.menu||DEFAULT_MENU)[this.curCat]||[];const el=G('menu-list');
+    if(!items.length){el.innerHTML='<div class="empty-lbl">ยังไม่มีเมนู — กด "+ เพิ่มเมนู"</div>';return;}
+    el.innerHTML=items.map(item=>`<div class="mrow">${item.image?`<img class="mrow-img" src="${item.image}">`:`<div class="mrow-emo">${item.emoji}</div>`}<div class="mrow-info"><div class="mrow-name">${item.name}</div><div class="mrow-desc">${item.desc}</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:2px">${item.tag?`<div class="mrow-tag">${item.tag}</div>`:''}${item.available===false?'<div class="unavail-lbl">⛔ ปิดชั่วคราว</div>':''}</div></div><div class="mrow-price">฿${item.price}</div><label class="tog"><input type="checkbox" ${item.available!==false?'checked':''} onchange="ADMIN.toggle(${item.id})"><span class="tog-sl"></span></label><div class="mrow-acts"><button class="r-edit" onclick="ADMIN.edit(${item.id})">✏ แก้ไข</button><button class="r-del" onclick="ADMIN.openDel(${item.id})">🗑</button></div></div>`).join('');
+  },
+  async toggle(id){for(const cat of Object.values(this.menu)){const i=cat.find(x=>x.id===id);if(i){i.available=i.available===false;await this.saveFB();this.toast(i.available?`✅ เปิด "${i.name}"`:`⛔ ปิด "${i.name}"`);this.renderList();this.renderStats();return;}}},
+  buildEmo(sel){this.selEmo=sel||EMOJIS[0];G('emo-grid').innerHTML=EMOJIS.map(e=>`<div class="emo-opt${e===sel?' on':''}" onclick="ADMIN.selEmo2('${e}')">${e}</div>`).join('');},
+  selEmo2(e){this.selEmo=e;this.buildEmo(e);},
+  imgUpload(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev2=>{this.curImg=ev2.target.result;G('img-prev').src=this.curImg;G('img-prev').classList.add('show');G('img-ph').style.display='none';G('img-drop').classList.add('has-img');G('img-clr').classList.add('show');};r.readAsDataURL(f);},
+  imgClear(){this.curImg=null;G('img-prev').src='';G('img-prev').classList.remove('show');G('img-ph').style.display='';G('img-drop').classList.remove('has-img');G('img-clr').classList.remove('show');G('f-img').value='';},
+  openAdd(){this.editId=null;G('form-title').textContent='// เพิ่มเมนูใหม่';['f-name','f-tag'].forEach(id=>{G(id).value='';});G('f-desc').value='';G('f-price').value='';G('f-cat').value=this.curCat;this.buildEmo('🍔');this.imgClear();},
+  edit(id){let item=null;for(const arr of Object.values(this.menu)){const f=arr.find(i=>i.id===id);if(f){item=f;break;}}if(!item)return;this.editId=id;G('form-title').textContent=`// แก้ไข — ${item.name}`;G('f-name').value=item.name;G('f-desc').value=item.desc;G('f-price').value=item.price;G('f-tag').value=item.tag||'';G('f-cat').value=this.curCat;this.buildEmo(item.emoji);if(item.image){this.curImg=item.image;G('img-prev').src=item.image;G('img-prev').classList.add('show');G('img-ph').style.display='none';G('img-drop').classList.add('has-img');G('img-clr').classList.add('show');}else this.imgClear();},
+  resetForm(){this.editId=null;G('form-title').textContent='// เพิ่มเมนูใหม่';['f-name','f-tag'].forEach(id=>G(id).value='');G('f-desc').value='';G('f-price').value='';this.buildEmo('🍔');this.imgClear();},
+  async save(){
+    const name=G('f-name').value.trim(),desc=G('f-desc').value.trim(),price=parseInt(G('f-price').value),tag=G('f-tag').value.trim(),cat=G('f-cat').value;
+    if(!name){this.toast('⚠ กรุณาใส่ชื่อเมนู','#e74c3c');return;}
+    if(!price||price<=0){this.toast('⚠ กรุณาใส่ราคา','#e74c3c');return;}
+    if(!desc){this.toast('⚠ กรุณาใส่รายละเอียด','#e74c3c');return;}
+    const btn=G('f-save');btn.disabled=true;btn.textContent='⏳...';
+    if(this.editId!==null){for(const arr of Object.values(this.menu)){const idx=arr.findIndex(i=>i.id===this.editId);if(idx!==-1){arr[idx]={...arr[idx],name,desc,price,tag,emoji:this.selEmo,image:this.curImg||arr[idx].image||null};break;}}this.toast(`✅ แก้ไข "${name}" แล้ว`);}
+    else{const all=[...this.menu.burger,...this.menu.steak,...this.menu.drinks];const nid=Math.max(...all.map(i=>i.id),0)+1;this.menu[cat].push({id:nid,name,desc,price,tag,emoji:this.selEmo,image:this.curImg||null,available:true});this.toast(`✅ เพิ่ม "${name}" แล้ว`);}
+    await this.saveFB();btn.disabled=false;btn.textContent='💾 บันทึก';this.resetForm();this.renderList();this.renderStats();
+  },
+  openDel(id){let item=null;for(const arr of Object.values(this.menu)){const f=arr.find(i=>i.id===id);if(f){item=f;break;}}if(!item)return;this.delId=id;G('del-name').textContent=`${item.emoji} ${item.name} — ฿${item.price}`;G('del-overlay').classList.add('open');},
+  closeDel(){this.delId=null;G('del-overlay').classList.remove('open');},
+  async confirmDel(){if(!this.delId)return;for(const cat of Object.keys(this.menu)){const idx=this.menu[cat].findIndex(i=>i.id===this.delId);if(idx!==-1){const n=this.menu[cat][idx].name;this.menu[cat].splice(idx,1);await this.saveFB();this.toast(`🗑 ลบ "${n}" แล้ว`,'#e74c3c');this.closeDel();this.renderList();this.renderStats();return;}}},
+  savePin(role){const inp=G(role==='kitchen'?'new-kpin':'new-apin'),v=inp.value.trim();if(!/^\d{4}$/.test(v)){this.toast('⚠ PIN ต้องเป็นตัวเลข 4 หลัก','#e74c3c');return;}localStorage.setItem('flegg_pin_'+role,v);inp.value='';this.toast(`✅ เปลี่ยน ${role==='kitchen'?'Kitchen':'Admin'} PIN แล้ว`);},
+  uploadSound(key,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{localStorage.setItem('flegg_sound_'+key,ev.target.result);this.updateSoundUI(key,f.name);this.toast(`✅ อัปโหลด "${f.name}" แล้ว`);inp.value='';};r.readAsDataURL(f);},
+  delSound(key){localStorage.removeItem('flegg_sound_'+key);this.updateSoundUI(key,null);this.toast('🗑 ลบเสียงแล้ว','#e74c3c');},
+  testSound(key){playSound(key,key==='neworder'?beep:melody);},
+  updateSoundUI(key,fn){const short=key==='neworder'?'no':'re';const s=G('ss-'+short),f=G('sf-'+short),d=G('sd-'+short);if(fn){s.textContent='✓ กำหนดเอง';s.className='sstat custom';f.textContent='🎵 '+fn;d.style.display='block';}else{s.textContent='ค่าเริ่มต้น';s.className='sstat default';f.textContent=key==='neworder'?'เสียง beep อัตโนมัติ':'เสียงเมโลดี้อัตโนมัติ';d.style.display='none';}},
+  initSoundUI(){['neworder','ready'].forEach(k=>{if(localStorage.getItem('flegg_sound_'+k))this.updateSoundUI(k,'ไฟล์ที่บันทึกไว้');});}
+};
+
+G('del-overlay').addEventListener('click',function(e){if(e.target===this)ADMIN.closeDel();});
+</script>
+</body>
+</html>
